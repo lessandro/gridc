@@ -5,11 +5,11 @@ import Text.ParserCombinators.Parsec
 
 import GridC.AST
 
-parseGC :: String -> String
+parseGC :: String -> Program
 parseGC input =
     case parse programP "" input of
-        Right program -> show program
-        Left e -> show e
+        Right program -> program
+        Left e -> error $ show e
     where
         -- program
         programP = Program <$> (spaces *> many (functionP <* spaces)) <* eof
@@ -22,13 +22,13 @@ parseGC input =
         -- statement
         statementP =
                 try (ReturnStm <$> returnP)
+            <|> try (AssignmentStm <$> assignmentP)
             <|> ExpressionStm <$> expressionP
         returnP = string "return" *> spaces *> expressionP
 
         -- expression
         expressionP =
                 try (FunctionCallExp <$> functionCallP)
-            <|> try (AssignmentExp <$> assignmentP)
             <|> IdentifierExp <$> identifierP
             <|> ValueExp <$> many1 digit
             <|> between (char '(' <* spaces) (spaces *> char ')') expressionP
@@ -43,5 +43,5 @@ parseGC input =
         -- etc
         dataTypeP =
                 IntType <$ string "int"
-            <|> VoidType <$ string "void"
+            <|> FloatType <$ string "float"
         identifierP = (++) <$> many1 letter <*> many alphaNum

@@ -1,6 +1,8 @@
 module GridC.AST where
 
-data DataType = IntType | VoidType
+type Identifier = String
+
+data DataType = IntType | FloatType
     deriving (Show)
 
 data Program = Program [Function]
@@ -8,8 +10,8 @@ data Program = Program [Function]
 
 data Function = Function {
     funcType :: DataType,
-    funcName :: String,
-    funcArgs :: [String],
+    funcName :: Identifier,
+    funcArgs :: [Identifier],
     funcBody :: [Statement]
 }
     deriving (Show)
@@ -17,23 +19,23 @@ data Function = Function {
 data Statement =
     ExpressionStm Expression
     | ReturnStm Expression
+    | AssignmentStm Assignment
     deriving (Show)
 
 data Expression =
     FunctionCallExp FunctionCall
-    | AssignmentExp Assignment
     | ValueExp String
     | IdentifierExp String
     deriving (Show)
 
 data FunctionCall = FunctionCall {
-    callName :: String,
+    callName :: Identifier,
     callArgs :: [Expression]
 }
     deriving (Show)
 
 data Assignment = Assignment {
-    asgnVar :: String,
+    asgnVar :: Identifier,
     asgnExp :: Expression
 }
     deriving (Show)

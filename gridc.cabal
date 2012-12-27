@@ -7,6 +7,6 @@ build-type:     Simple
 cabal-version:  >= 1.2
 
 executable gridc
-  build-depends:  base, parsec
+  build-depends:  base, parsec, mtl
   main-is:        Main.hs
   hs-source-dirs: src
