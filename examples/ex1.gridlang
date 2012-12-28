@@ -1,0 +1,53 @@
+CALL @main
+PUSH @end
+GOTO
+
+@print
+PRINT
+PUSH 0
+RETURN
+
+@add
+ADD
+RETURN
+
+@test
+# call add
+# ["a","b"] a
+PEEK << -2
+# ["a","b","temp a"] b
+PEEK << -2
+CALL @add
+STORE retval
+# popping locals ["a","b"]
+POP
+POP
+PUSH retval
+RETURN
+# end @test
+
+@main
+# assign a
+PUSH 3
+# assign b
+PUSH 9
+# call print
+# call test
+# ["a","b"] a
+PEEK << -2
+# ["a","b","temp a"] b
+PEEK << -2
+CALL @test
+CALL @print
+POP
+PUSH 0
+STORE retval
+# popping locals ["a","b"]
+POP
+POP
+PUSH retval
+RETURN
+# end @main
+
+@end
+END

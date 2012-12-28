@@ -1,15 +1,22 @@
+{-# LANGUAGE TemplateHaskell, Rank2Types, NoMonomorphismRestriction #-}
+
 module GridC.Codegen (codegen) where
 
+import Control.Lens (makeLenses, (.=), (^.), (%=))
 import Control.Monad (liftM)
-import Control.Monad.State (State, evalState)
+import Control.Monad.State (State, evalState, get)
+import Data.List (elemIndex)
+import Data.Maybe (fromMaybe)
+
 import GridC.AST
 
 type Code = String
 
 data GenState = GenState {
-    locals :: [Identifier],
-    jumps :: Int
+    _locals :: [Identifier]
 }
+
+makeLenses ''GenState
 
 type Generator = State GenState [Code]
 
@@ -17,12 +24,17 @@ concatMapM :: (Monad m) => (a -> m [b]) -> [a] -> m [b]
 concatMapM f xs = liftM concat (mapM f xs)
 
 codegen :: Program -> [Code]
-codegen program = evalState (genProgram program) GenState { locals = [], jumps = 0 }
+codegen program = evalState (genProgram program) emptyState
+    where
+        emptyState = GenState { _locals = [] }
 
 genProgram :: Program -> Generator
 genProgram (Program functions) = do
     let
-        begin = ["PUSH @end", "PUSH @main", "GOTO", ""]
+        begin = [
+            "CALL @main", "PUSH @end", "GOTO", "",
+            "@print", "PRINT", "PUSH 0", "RETURN", "",
+            "@add", "ADD", "RETURN", ""]
         end = ["@end", "END"]
 
     code <- concatMapM genFunction functions
@@ -30,48 +42,68 @@ genProgram (Program functions) = do
     return $ begin ++ code ++ end
 
 genFunction :: Function -> Generator
-genFunction _ = return []
-
-{-
-genFunction function = decl : body ++ ret
-    where
+genFunction function = do
+    let
         decl = '@' : funcName function
-        body = genBody (funcArgs function) (funcBody function)
-        ret = ["# end " ++ decl, "GOTO", ""]
+        ret = ["# end " ++ decl, ""]
+
+    locals .= funcArgs function
+    body <- genBody (funcBody function)
+    return $ decl : body ++ ret
 
 genBody :: [Statement] -> Generator
-genBody _ [] = []
-genBody locals (statement:rest) = code ++ genBody newLocals rest
-    where
-        (newLocals, code) = genStatement locals statement
+genBody = concatMapM genStatement
 
 genStatement :: Statement -> Generator
-genStatement locals (ReturnStm expression) = ([], code ++ popLocals ++ ret)
-    where
-        code = genExpression locals expression
-        popLocals = concatMap (\l -> ["# popping " ++ l, "SWAP", "POP"]) locals
-        ret = ["# return", "SWAP", "GOTO"]
+genStatement (ReturnStm expression) = do
+    s <- get
+    code <- genExpression expression
 
-genStatement locals (AssignmentStm assignment) = (newLocals, comment ++ code)
-    where
+    let
+        saveRet = ["STORE retval"]
+        comment = "# popping locals " ++ show (s^.locals)
+        popLocals = comment : map (const "POP") (s^.locals)
+        pushRet = ["PUSH retval"]
+        ret = ["RETURN"]
+
+    return $ code ++ saveRet ++ popLocals ++ pushRet ++ ret
+
+genStatement (AssignmentStm assignment) = do
+    let
         var = asgnVar assignment
-        newLocals = locals ++ [var]
-        code = genExpression locals (asgnExp assignment)
-        comment = ["# assign " ++ var]
 
-genStatement locals (ExpressionStm expression) = (locals, code ++ discard)
-    where
-        code = genExpression locals expression
-        discard = ["POP"]
+    code <- genExpression (asgnExp assignment)
+    locals %= ((++ [var]) . init)
+    return $ ("# assign " ++ var) : code
+
+genStatement (ExpressionStm expression) = do
+    code <- genExpression expression
+    locals %= init
+    return $ code ++ ["POP"]
 
 genExpression :: Expression -> Generator
-genExpression _ (ValueExp value) = ["PUSH " ++ value]
+genExpression (ValueExp value) = do
+    locals %= (++ [value])
+    return ["PUSH " ++ value]
 
-genExpression _ (FunctionCallExp functionCall) = ret ++ args ++ call
-    where
-        args = concatMap genExpression $ callArgs functionCall
-        call = "PUSH $$$"
-        ret = []
+genExpression (FunctionCallExp functionCall) = do
+    let 
+        name = callName functionCall
+        call = ["CALL @" ++ name]
+        argNames = callArgs functionCall
 
-genExpression _ expression = ["# expression " ++ show expression]
--}
+    args <- concatMapM genExpression argNames
+    locals %= (reverse . drop (length argNames) . reverse)
+    locals %= (++ [name ++ " retval"])
+    return $ ["# call " ++ name] ++ args ++ call
+
+genExpression (IdentifierExp identifier) = do
+    s <- get
+
+    let
+        msg = "identifier " ++ identifier ++ " not in scope"
+        index = fromMaybe (error msg) (elemIndex identifier $ s^.locals)
+        ll = length $ s^.locals
+
+    locals %= (++ ["temp " ++ identifier])
+    return ["# " ++ show (s^.locals) ++ " " ++ identifier, "PEEK << " ++ show (index - ll)]

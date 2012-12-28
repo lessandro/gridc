@@ -10,6 +10,5 @@ main = do
     args <- getArgs
     contents <- readFile $ head args
     let ast = parseGC contents
-    print ast
     let output = codegen ast
-    putStrLn $ unlines output
+    putStr $ unlines output
