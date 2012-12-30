@@ -41,7 +41,7 @@ parseGC input =
         expressionP =
                 try (FunctionCallExp <$> functionCallP)
             <|> IdentifierExp <$> identifierP
-            <|> ValueExp <$> many1 digit
+            <|> ValueExp <$> valueP
             <|> between (char '(' <* spaces) (spaces *> char ')') expressionP
 
         -- assignment
@@ -55,7 +55,13 @@ parseGC input =
         dataTypeP =
                 IntType <$ string "int"
             <|> FloatType <$ string "float"
+
         identifierP = (++) <$> many1 letter <*> many alphaNum
+
+        valueP = option "" (string "-") `cc` many1 digit `cc` fractionP
+        fractionP = option "" (string "." `cc` many1 digit)
+
+        cc a b = (++) <$> a <*> b
 
 showError :: String -> ParseError -> String
 showError src e = init $ unlines [show e, line0, line1, column]

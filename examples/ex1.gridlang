@@ -207,6 +207,60 @@ POP
 POP
 # end @scope
 
+@nums
+# assign a
+PUSH 123
+# assign b
+PUSH -456
+# assign c
+PUSH 1.23
+# assign d
+PUSH -4.56
+# call print
+# ["a","b","c","d"]
+PEEK << -4
+PRINT
+PUSH 0
+# pop expr stm
+POP
+# call print
+# ["a","b","c","d"]
+PEEK << -3
+PRINT
+PUSH 0
+# pop expr stm
+POP
+# call print
+# ["a","b","c","d"]
+PEEK << -2
+PRINT
+PUSH 0
+# pop expr stm
+POP
+# call print
+# ["a","b","c","d"]
+PEEK << -1
+PRINT
+PUSH 0
+# pop expr stm
+POP
+PUSH 0
+STORE retval
+# ret, pop locals ["a","b","c","d"]
+POP
+POP
+POP
+POP
+PUSH retval
+RETURN
+# scope exit, pop ["a","b","c","d","0"]
+POP
+POP
+POP
+POP
+POP
+# end @nums
+
 @main
 # call print
 # call factorial
@@ -233,8 +287,12 @@ POP
 CALL @scope
 # pop expr stm
 POP
+# call nums
+CALL @nums
+# pop expr stm
+POP
 # assign k
-PUSH 0
+PUSH 1
 # ["k"]
 PEEK << -1
 IFFGOTO @L8

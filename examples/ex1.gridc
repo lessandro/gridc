@@ -46,14 +46,27 @@ int scope()
     print(a);
 }
 
+int nums()
+{
+    a = 123;
+    b = -456;
+    c = 1.23;
+    d = -4.56;
+    print(a);
+    print(b);
+    print(c);
+    print(d);
+}
+
 int main()
 {
     print(factorial(4));
     print(fib(10));
     assigntest(10);
     scope();
+    nums();
 
-    k = 0;
+    k = 1;
 
     if (k) {
         print(1);
