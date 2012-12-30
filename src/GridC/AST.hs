@@ -21,12 +21,19 @@ data Statement =
     | ReturnStm Expression
     | AssignmentStm Assignment
     | IfStm If
+    | WhileStm While
     deriving (Show)
 
 data If = If {
     ifCond :: Expression,
     ifThen :: [Statement],
     ifElse :: [Statement]
+}
+    deriving (Show)
+
+data While = While {
+    whileCond :: Expression,
+    whileBody :: [Statement]
 }
     deriving (Show)
 

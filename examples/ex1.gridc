@@ -24,6 +24,22 @@ int fib(n)
     return add(f1, f2);
 }
 
+int fib2(n)
+{
+    a = 0;
+    b = 1;
+
+    while (n) {
+        c = a;
+        a = b;
+        b = add(b, c);
+
+        n = sub(n, 1);
+    }
+
+    return a;
+}
+
 int assigntest(a)
 {
     print(a);
@@ -62,23 +78,10 @@ int main()
 {
     print(factorial(4));
     print(fib(10));
+    print(fib2(10));
     assigntest(10);
     scope();
     nums();
-
-    k = 1;
-
-    if (k) {
-        print(1);
-    } else {
-        print(2);
-    }
-
-    if (1) {
-        print(1);
-    } else {
-        print(2);
-    }
 
     return 0;
 }

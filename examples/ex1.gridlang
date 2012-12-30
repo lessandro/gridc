@@ -115,6 +115,60 @@ POP
 POP
 # end @fib
 
+@fib2
+# assign a
+PUSH 0
+# assign b
+PUSH 1
+@L6
+# ["n","a","b"]
+PEEK << -3
+IFFGOTO @L7
+# assign c
+# ["n","a","b"]
+PEEK << -2
+# ["n","a","b","c"]
+PEEK << -2
+PUSH -3
+SWAP
+POKE
+# call add
+# ["n","a","b","c"]
+PEEK << -2
+# ["n","a","b","c","temp b"]
+PEEK << -2
+ADD
+PUSH -2
+SWAP
+POKE
+# call sub
+# ["n","a","b","c"]
+PEEK << -4
+PUSH 1
+SUB
+PUSH -4
+SWAP
+POKE
+# scope exit, pop ["c"]
+POP
+GOTO << @L6
+PUSH @L6
+@L7
+# ["n","a","b"]
+PEEK << -2
+STORE retval
+# ret, pop locals ["n","a","b"]
+POP
+POP
+POP
+PUSH retval
+RETURN
+# scope exit, pop ["a","b","temp a"]
+POP
+POP
+POP
+# end @fib2
+
 @assigntest
 # call print
 # ["a"]
@@ -170,7 +224,7 @@ POP
 # assign a
 PUSH 100
 PUSH 1
-IFFGOTO @L6
+IFFGOTO @L8
 # assign b
 PUSH 101
 # call print
@@ -186,9 +240,9 @@ SWAP
 POKE
 # scope exit, pop ["b"]
 POP
-GOTO << @L7
-@L6
-@L7
+GOTO << @L9
+@L8
+@L9
 # call print
 # ["a"]
 PEEK << -1
@@ -278,6 +332,14 @@ PRINT
 PUSH 0
 # pop expr stm
 POP
+# call print
+# call fib2
+PUSH 10
+CALL @fib2
+PRINT
+PUSH 0
+# pop expr stm
+POP
 # call assigntest
 PUSH 10
 CALL @assigntest
@@ -295,23 +357,6 @@ POP
 PUSH 1
 # ["k"]
 PEEK << -1
-IFFGOTO @L8
-# call print
-PUSH 1
-PRINT
-PUSH 0
-# pop expr stm
-POP
-GOTO << @L9
-@L8
-# call print
-PUSH 2
-PRINT
-PUSH 0
-# pop expr stm
-POP
-@L9
-PUSH 1
 IFFGOTO @L10
 # call print
 PUSH 1
@@ -328,6 +373,23 @@ PUSH 0
 # pop expr stm
 POP
 @L11
+PUSH 1
+IFFGOTO @L12
+# call print
+PUSH 1
+PRINT
+PUSH 0
+# pop expr stm
+POP
+GOTO << @L13
+@L12
+# call print
+PUSH 2
+PRINT
+PUSH 0
+# pop expr stm
+POP
+@L13
 PUSH 0
 STORE retval
 # ret, pop locals ["k"]

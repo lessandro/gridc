@@ -22,6 +22,7 @@ parseGC input =
         -- statement
         statementP =
                 IfStm <$> ifP
+            <|> WhileStm <$> whileP
             <|> statementSMP <* spaces <* char ';' <* spaces
 
         statementSMP =
@@ -33,9 +34,12 @@ parseGC input =
         returnP = string "return" *> spaces *> expressionP
 
         -- if
-        ifP = If <$> (string "if" *> spaces *> ifCondP) <* spaces <*> funcBodyP <* spaces <*> ifElseP
-        ifCondP = between (char '(') (char ')') $ between spaces spaces expressionP
+        ifP = If <$> (string "if" *> spaces *> condP) <* spaces <*> funcBodyP <* spaces <*> ifElseP
+        condP = between (char '(') (char ')') $ between spaces spaces expressionP
         ifElseP = option [] $ string "else" *> spaces *> funcBodyP <* spaces
+
+        -- while
+        whileP = While <$> (string "while" *> spaces *> condP) <* spaces <*> funcBodyP <* spaces
 
         -- expression
         expressionP =

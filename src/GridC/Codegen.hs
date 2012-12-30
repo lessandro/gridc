@@ -20,6 +20,12 @@ data GenState = GenState {
 
 makeLenses ''GenState
 
+newLabel :: State GenState String
+newLabel = do
+    val <- use jump
+    jump += 1
+    return $ "@L" ++ show val
+
 type Generator = State GenState [Code]
 
 ops0 :: [String]
@@ -107,27 +113,32 @@ genStatement (ExpressionStm expression) = do
     return $ code ++ ["# pop expr stm", "POP"]
 
 genStatement (IfStm (If condition thenBody elseBody)) = do
-    let
-        incJump = do
-            val <- use jump
-            jump += 1
-            return val
-
     condCode <- genExpression condition
     locals %= init
     thenCode <- genBody thenBody
-    elseJump <- incJump
+    elseLabel <- newLabel
     elseCode <- genBody elseBody
-    endJump <- incJump
+    endLabel <- newLabel
 
     let
-        elseLabel = "@L" ++ show elseJump
-        endLabel = "@L" ++ show endJump
         check = ["IFFGOTO " ++ elseLabel]
         middle = ["GOTO << " ++ endLabel, elseLabel]
         end = [endLabel]
 
     return $ condCode ++ check ++ thenCode ++ middle ++ elseCode ++ end
+
+genStatement (WhileStm (While condition body)) = do
+    topLabel <- newLabel
+    condCode <- genExpression condition
+    locals %= init
+    bodyCode <- genBody body
+    endLabel <- newLabel
+
+    let
+        check = ["IFFGOTO " ++ endLabel]
+        end = ["GOTO << " ++ topLabel, "PUSH " ++ topLabel, endLabel]
+
+    return $ [topLabel] ++ condCode ++ check ++ bodyCode ++ end
 
 genCall :: Identifier -> [Code]
 genCall name
