@@ -20,6 +20,14 @@ data Statement =
     ExpressionStm Expression
     | ReturnStm Expression
     | AssignmentStm Assignment
+    | IfStm If
+    deriving (Show)
+
+data If = If {
+    ifCond :: Expression,
+    ifThen :: [Statement],
+    ifElse :: [Statement]
+}
     deriving (Show)
 
 data Expression =

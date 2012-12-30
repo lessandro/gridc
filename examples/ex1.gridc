@@ -1,12 +1,48 @@
-int test(a, b)
+int factorial(n)
 {
-    return add(a, b);
+    if (equal(n, 1)) {
+        return 1;
+    }
+
+    f = factorial(sub(n, 1));
+
+    return mul(n, f);
+}
+
+int fib(n)
+{
+    if (equal(n, 0)) {
+        return 0;
+    }
+    if (equal(n, 1)) {
+        return 1;
+    }
+
+    f1 = fib(sub(n, 1));
+    f2 = fib(sub(n, 2));
+
+    return add(f1, f2);
 }
 
 int main()
 {
-    a = 3;
-    b = 9;
-    print(test(a, b));
+    print(factorial(4));
+
+    print(fib(10));
+
+    k = 0;
+
+    if (k) {
+        print(1);
+    } else {
+        print(2);
+    }
+
+    if (1) {
+        print(1);
+    } else {
+        print(2);
+    }
+
     return 0;
 }

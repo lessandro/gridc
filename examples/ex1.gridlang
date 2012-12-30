@@ -2,40 +2,157 @@ CALL @main
 PUSH @end
 GOTO
 
-@test
-# call add
-# ["a","b"] a
-PEEK << -2
-# ["a","b","temp a"] b
-PEEK << -2
-ADD
+@factorial
+# call equal
+# ["n"] n
+PEEK << -1
+PUSH 1
+EQUAL
+IFFGOTO @L0
+PUSH 1
 STORE retval
-# popping locals ["a","b"]
+# popping locals ["n"]
+POP
+PUSH retval
+RETURN
+GOTO << @L1
+@L0
+@L1
+# assign f
+# call factorial
+# call sub
+# ["n"] n
+PEEK << -1
+PUSH 1
+SUB
+CALL @factorial
+# call mul
+# ["n","f"] n
+PEEK << -2
+# ["n","f","temp n"] f
+PEEK << -2
+MUL
+STORE retval
+# popping locals ["n","f"]
 POP
 POP
 PUSH retval
 RETURN
-# end @test
+# end @factorial
+
+@fib
+# call equal
+# ["n"] n
+PEEK << -1
+PUSH 0
+EQUAL
+IFFGOTO @L2
+PUSH 0
+STORE retval
+# popping locals ["n"]
+POP
+PUSH retval
+RETURN
+GOTO << @L3
+@L2
+@L3
+# call equal
+# ["n"] n
+PEEK << -1
+PUSH 1
+EQUAL
+IFFGOTO @L4
+PUSH 1
+STORE retval
+# popping locals ["n"]
+POP
+PUSH retval
+RETURN
+GOTO << @L5
+@L4
+@L5
+# assign f1
+# call fib
+# call sub
+# ["n"] n
+PEEK << -1
+PUSH 1
+SUB
+CALL @fib
+# assign f2
+# call fib
+# call sub
+# ["n","f1"] n
+PEEK << -2
+PUSH 2
+SUB
+CALL @fib
+# call add
+# ["n","f1","f2"] f1
+PEEK << -2
+# ["n","f1","f2","temp f1"] f2
+PEEK << -2
+ADD
+STORE retval
+# popping locals ["n","f1","f2"]
+POP
+POP
+POP
+PUSH retval
+RETURN
+# end @fib
 
 @main
-# assign a
-PUSH 3
-# assign b
-PUSH 9
 # call print
-# call test
-# ["a","b"] a
-PEEK << -2
-# ["a","b","temp a"] b
-PEEK << -2
-CALL @test
+# call factorial
+PUSH 4
+CALL @factorial
 PRINT
 PUSH 0
 POP
+# call print
+# call fib
+PUSH 10
+CALL @fib
+PRINT
+PUSH 0
+POP
+# assign k
+PUSH 0
+# ["k"] k
+PEEK << -1
+IFFGOTO @L6
+# call print
+PUSH 1
+PRINT
+PUSH 0
+POP
+GOTO << @L7
+@L6
+# call print
+PUSH 2
+PRINT
+PUSH 0
+POP
+@L7
+PUSH 1
+IFFGOTO @L8
+# call print
+PUSH 1
+PRINT
+PUSH 0
+POP
+GOTO << @L9
+@L8
+# call print
+PUSH 2
+PRINT
+PUSH 0
+POP
+@L9
 PUSH 0
 STORE retval
-# popping locals ["a","b"]
-POP
+# popping locals ["k"]
 POP
 PUSH retval
 RETURN

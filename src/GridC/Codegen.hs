@@ -2,7 +2,7 @@
 
 module GridC.Codegen (codegen) where
 
-import Control.Lens (makeLenses, (.=), (^.), (%=))
+import Control.Lens (makeLenses, (.=), (^.), (%=), (+=), use)
 import Control.Monad (liftM)
 import Control.Monad.State (State, evalState, get)
 import Data.Char (toUpper)
@@ -14,7 +14,8 @@ import GridC.AST
 type Code = String
 
 data GenState = GenState {
-    _locals :: [Identifier]
+    _locals :: [Identifier],
+    _jump :: Int
 }
 
 makeLenses ''GenState
@@ -33,7 +34,7 @@ concatMapM f xs = liftM concat (mapM f xs)
 codegen :: Program -> [Code]
 codegen program = evalState (genProgram program) emptyState
     where
-        emptyState = GenState { _locals = [] }
+        emptyState = GenState { _locals = [], _jump = 0 }
 
 genProgram :: Program -> Generator
 genProgram (Program functions) = do
@@ -42,7 +43,6 @@ genProgram (Program functions) = do
         end = ["@end", "END"]
 
     code <- concatMapM genFunction functions
-
     return $ begin ++ code ++ end
 
 genFunction :: Function -> Generator
@@ -56,7 +56,11 @@ genFunction function = do
     return $ decl : body ++ ret
 
 genBody :: [Statement] -> Generator
-genBody = concatMapM genStatement
+genBody statements = do
+    s <- get
+    code <- concatMapM genStatement statements
+    locals .= s^.locals
+    return code
 
 genStatement :: Statement -> Generator
 genStatement (ReturnStm expression) = do
@@ -72,11 +76,8 @@ genStatement (ReturnStm expression) = do
 
     return $ code ++ saveRet ++ popLocals ++ pushRet ++ ret
 
-genStatement (AssignmentStm assignment) = do
-    let
-        var = asgnVar assignment
-
-    code <- genExpression (asgnExp assignment)
+genStatement (AssignmentStm (Assignment var expression)) = do
+    code <- genExpression expression
     locals %= ((++ [var]) . init)
     return $ ("# assign " ++ var) : code
 
@@ -85,7 +86,30 @@ genStatement (ExpressionStm expression) = do
     locals %= init
     return $ code ++ ["POP"]
 
-genCall :: String -> [Code]
+genStatement (IfStm (If condition thenBody elseBody)) = do
+    let
+        incJump = do
+            val <- use jump
+            jump += 1
+            return val
+    
+    condCode <- genExpression condition
+    locals %= init
+    thenCode <- genBody thenBody
+    elseJump <- incJump
+    elseCode <- genBody elseBody
+    endJump <- incJump
+
+    let
+        elseLabel = "@L" ++ show elseJump
+        endLabel = "@L" ++ show endJump
+        check = ["IFFGOTO " ++ elseLabel]
+        middle = ["GOTO << " ++ endLabel, elseLabel]
+        end = [endLabel]
+
+    return $ condCode ++ check ++ thenCode ++ middle ++ elseCode ++ end
+
+genCall :: Identifier -> [Code]
 genCall name
     | name `elem` ops0 = [upperName, "PUSH 0"]
     | name `elem` ops1 = [upperName]
@@ -97,16 +121,11 @@ genExpression (ValueExp value) = do
     locals %= (++ [value])
     return ["PUSH " ++ value]
 
-genExpression (FunctionCallExp functionCall) = do
-    let 
-        name = callName functionCall
-        call = genCall name
-        argNames = callArgs functionCall
-
+genExpression (FunctionCallExp (FunctionCall name argNames)) = do
     args <- concatMapM genExpression argNames
     locals %= (reverse . drop (length argNames) . reverse)
     locals %= (++ [name ++ " retval"])
-    return $ ["# call " ++ name] ++ args ++ call
+    return $ ["# call " ++ name] ++ args ++ genCall name
 
 genExpression (IdentifierExp identifier) = do
     s <- get

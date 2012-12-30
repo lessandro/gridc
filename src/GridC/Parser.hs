@@ -17,14 +17,25 @@ parseGC input =
         -- function
         functionP = Function <$> dataTypeP <* spaces <*> identifierP <* spaces <*> funcArgsP <* spaces <*> funcBodyP
         funcArgsP = between (char '(' <* spaces) (char ')') $ sepBy (identifierP <* spaces) (char ',' <* spaces)
-        funcBodyP = between (char '{' <* spaces) (char '}') $ endBy statementP (spaces *> char ';' <* spaces)
+        funcBodyP = between (char '{' <* spaces) (char '}') $ many statementP
 
         -- statement
         statementP =
+                IfStm <$> ifP
+            <|> statementSMP <* spaces <* char ';' <* spaces
+
+        statementSMP =
                 try (ReturnStm <$> returnP)
             <|> try (AssignmentStm <$> assignmentP)
             <|> ExpressionStm <$> expressionP
+
+        -- return
         returnP = string "return" *> spaces *> expressionP
+
+        -- if
+        ifP = If <$> (string "if" *> spaces *> ifCondP) <* spaces <*> funcBodyP <* spaces <*> ifElseP
+        ifCondP = between (char '(') (char ')') $ between spaces spaces expressionP
+        ifElseP = option [] $ string "else" *> spaces *> funcBodyP <* spaces
 
         -- expression
         expressionP =
