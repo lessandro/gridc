@@ -9,6 +9,7 @@ int factorial(n)
     return n * f;
 }
 
+// exponential
 int fib(n)
 {
     if (n == 0) {
@@ -21,6 +22,7 @@ int fib(n)
     return fib(n - 1) + fib(n - 2);
 }
 
+// linear
 int fib2(n)
 {
     a = 0;
@@ -31,7 +33,7 @@ int fib2(n)
         a = b;
         b = b + c;
 
-        n = n - 1;
+        n = n - 1; // n--
     }
 
     return a;
