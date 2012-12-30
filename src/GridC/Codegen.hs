@@ -2,12 +2,12 @@
 
 module GridC.Codegen (codegen) where
 
+import Control.Applicative ((<$>))
 import Control.Lens (makeLenses, (.=), (^.), (%=), (+=), use)
 import Control.Monad (liftM)
 import Control.Monad.State (State, evalState, get)
 import Data.Char (toUpper)
 import Data.List (elemIndex)
-import Data.Maybe (fromMaybe)
 
 import GridC.AST
 
@@ -50,9 +50,16 @@ genFunction function = do
     let
         decl = '@' : funcName function
         ret = ["# end " ++ decl, ""]
+        statements = funcBody function
+        statements' = [ReturnStm (ValueExp "0") | noReturn]
+        noReturn
+            | null statements = True
+            | otherwise = case last (funcBody function) of
+                ReturnStm _ -> False
+                _ -> True
 
     locals .= funcArgs function
-    body <- genBody (funcBody function)
+    body <- genBody $ statements ++ statements'
     return $ decl : body ++ ret
 
 genBody :: [Statement] -> Generator
@@ -76,10 +83,16 @@ genStatement (ReturnStm expression) = do
 
     return $ code ++ saveRet ++ popLocals ++ pushRet ++ ret
 
-genStatement (AssignmentStm (Assignment var expression)) = do
+genStatement (AssignmentStm (Assignment name expression)) = do
+    mpos <- findLocal name
     code <- genExpression expression
-    locals %= ((++ [var]) . init)
-    return $ ("# assign " ++ var) : code
+    locals %= init
+    case mpos of
+        Just pos ->
+            return $ code ++ ["PUSH " ++ show pos, "SWAP", "POKE"]
+        Nothing -> do
+            locals %= (++ [name])
+            return $ ("# assign " ++ name) : code
 
 genStatement (ExpressionStm expression) = do
     code <- genExpression expression
@@ -92,7 +105,7 @@ genStatement (IfStm (If condition thenBody elseBody)) = do
             val <- use jump
             jump += 1
             return val
-    
+
     condCode <- genExpression condition
     locals %= init
     thenCode <- genBody thenBody
@@ -127,13 +140,16 @@ genExpression (FunctionCallExp (FunctionCall name argNames)) = do
     locals %= (++ [name ++ " retval"])
     return $ ["# call " ++ name] ++ args ++ genCall name
 
-genExpression (IdentifierExp identifier) = do
-    s <- get
+genExpression (IdentifierExp name) = do
+    showLocals <- show <$> use locals
+    mpos <- findLocal name
+    case mpos of
+        Just pos -> do
+            locals %= (++ ["temp " ++ name])
+            return ["# " ++ showLocals, "PEEK << " ++ show pos]
+        Nothing -> error $ "identifier " ++ name ++ " not in scope"
 
-    let
-        msg = "identifier " ++ identifier ++ " not in scope"
-        index = fromMaybe (error msg) (elemIndex identifier $ s^.locals)
-        ll = length $ s^.locals
-
-    locals %= (++ ["temp " ++ identifier])
-    return ["# " ++ show (s^.locals) ++ " " ++ identifier, "PEEK << " ++ show (index - ll)]
+findLocal :: Identifier -> State GenState (Maybe Int)
+findLocal name = do
+    allLocals <- use locals
+    return $ flip (-) (length allLocals) <$> elemIndex name allLocals

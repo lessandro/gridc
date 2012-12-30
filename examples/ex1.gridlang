@@ -4,7 +4,7 @@ GOTO
 
 @factorial
 # call equal
-# ["n"] n
+# ["n"]
 PEEK << -1
 PUSH 1
 EQUAL
@@ -21,15 +21,15 @@ GOTO << @L1
 # assign f
 # call factorial
 # call sub
-# ["n"] n
+# ["n"]
 PEEK << -1
 PUSH 1
 SUB
 CALL @factorial
 # call mul
-# ["n","f"] n
+# ["n","f"]
 PEEK << -2
-# ["n","f","temp n"] f
+# ["n","f","temp n"]
 PEEK << -2
 MUL
 STORE retval
@@ -42,7 +42,7 @@ RETURN
 
 @fib
 # call equal
-# ["n"] n
+# ["n"]
 PEEK << -1
 PUSH 0
 EQUAL
@@ -57,7 +57,7 @@ GOTO << @L3
 @L2
 @L3
 # call equal
-# ["n"] n
+# ["n"]
 PEEK << -1
 PUSH 1
 EQUAL
@@ -74,7 +74,7 @@ GOTO << @L5
 # assign f1
 # call fib
 # call sub
-# ["n"] n
+# ["n"]
 PEEK << -1
 PUSH 1
 SUB
@@ -82,15 +82,15 @@ CALL @fib
 # assign f2
 # call fib
 # call sub
-# ["n","f1"] n
+# ["n","f1"]
 PEEK << -2
 PUSH 2
 SUB
 CALL @fib
 # call add
-# ["n","f1","f2"] f1
+# ["n","f1","f2"]
 PEEK << -2
-# ["n","f1","f2","temp f1"] f2
+# ["n","f1","f2","temp f1"]
 PEEK << -2
 ADD
 STORE retval
@@ -101,6 +101,50 @@ POP
 PUSH retval
 RETURN
 # end @fib
+
+@assigntest
+# call print
+# ["a"]
+PEEK << -1
+PRINT
+PUSH 0
+POP
+PUSH 20
+PUSH -1
+SWAP
+POKE
+# call print
+# ["a"]
+PEEK << -1
+PRINT
+PUSH 0
+POP
+# assign k
+PUSH 30
+# call print
+# ["a","k"]
+PEEK << -1
+PRINT
+PUSH 0
+POP
+PUSH 40
+PUSH -1
+SWAP
+POKE
+# call print
+# ["a","k"]
+PEEK << -1
+PRINT
+PUSH 0
+POP
+PUSH 0
+STORE retval
+# popping locals ["a","k"]
+POP
+POP
+PUSH retval
+RETURN
+# end @assigntest
 
 @main
 # call print
@@ -117,9 +161,13 @@ CALL @fib
 PRINT
 PUSH 0
 POP
+# call assigntest
+PUSH 10
+CALL @assigntest
+POP
 # assign k
 PUSH 0
-# ["k"] k
+# ["k"]
 PEEK << -1
 IFFGOTO @L6
 # call print

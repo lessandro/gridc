@@ -24,11 +24,22 @@ int fib(n)
     return add(f1, f2);
 }
 
+int assigntest(a)
+{
+    print(a);
+    a = 20;
+    print(a);
+    k = 30;
+    print(k);
+    k = 40;
+    print(k);
+}
+
 int main()
 {
     print(factorial(4));
-
     print(fib(10));
+    assigntest(10);
 
     k = 0;
 
