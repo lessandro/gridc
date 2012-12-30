@@ -2,22 +2,13 @@ CALL @main
 PUSH @end
 GOTO
 
-@print
-PRINT
-PUSH 0
-RETURN
-
-@add
-ADD
-RETURN
-
 @test
 # call add
 # ["a","b"] a
 PEEK << -2
 # ["a","b","temp a"] b
 PEEK << -2
-CALL @add
+ADD
 STORE retval
 # popping locals ["a","b"]
 POP
@@ -38,7 +29,8 @@ PEEK << -2
 # ["a","b","temp a"] b
 PEEK << -2
 CALL @test
-CALL @print
+PRINT
+PUSH 0
 POP
 PUSH 0
 STORE retval

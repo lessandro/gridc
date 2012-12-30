@@ -5,6 +5,7 @@ module GridC.Codegen (codegen) where
 import Control.Lens (makeLenses, (.=), (^.), (%=))
 import Control.Monad (liftM)
 import Control.Monad.State (State, evalState, get)
+import Data.Char (toUpper)
 import Data.List (elemIndex)
 import Data.Maybe (fromMaybe)
 
@@ -20,6 +21,12 @@ makeLenses ''GenState
 
 type Generator = State GenState [Code]
 
+ops0 :: [String]
+ops0 = words "print panic"
+
+ops1 :: [String]
+ops1 = words "plus add minus sub mul div min max greater less equal"
+
 concatMapM :: (Monad m) => (a -> m [b]) -> [a] -> m [b]
 concatMapM f xs = liftM concat (mapM f xs)
 
@@ -31,10 +38,7 @@ codegen program = evalState (genProgram program) emptyState
 genProgram :: Program -> Generator
 genProgram (Program functions) = do
     let
-        begin = [
-            "CALL @main", "PUSH @end", "GOTO", "",
-            "@print", "PRINT", "PUSH 0", "RETURN", "",
-            "@add", "ADD", "RETURN", ""]
+        begin = ["CALL @main", "PUSH @end", "GOTO", ""]
         end = ["@end", "END"]
 
     code <- concatMapM genFunction functions
@@ -81,6 +85,13 @@ genStatement (ExpressionStm expression) = do
     locals %= init
     return $ code ++ ["POP"]
 
+genCall :: String -> [Code]
+genCall name
+    | name `elem` ops0 = [upperName, "PUSH 0"]
+    | name `elem` ops1 = [upperName]
+    | otherwise = ["CALL @" ++ name]
+    where upperName = map toUpper name
+
 genExpression :: Expression -> Generator
 genExpression (ValueExp value) = do
     locals %= (++ [value])
@@ -89,7 +100,7 @@ genExpression (ValueExp value) = do
 genExpression (FunctionCallExp functionCall) = do
     let 
         name = callName functionCall
-        call = ["CALL @" ++ name]
+        call = genCall name
         argNames = callArgs functionCall
 
     args <- concatMapM genExpression argNames
