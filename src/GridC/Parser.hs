@@ -12,48 +12,65 @@ parseGC input =
         Right program -> program
     where
         -- program
-        programP = Program <$> (spaces *> many (functionP <* spaces)) <* eof
+        programP = Program <$> (spaces *> many functionP) <* eof
 
         -- function
-        functionP = Function <$> dataTypeP <* spaces <*> identifierP <* spaces <*> funcArgsP <* spaces <*> funcBodyP
-        funcArgsP = between (char '(' <* spaces) (char ')') $ sepBy (identifierP <* spaces) (char ',' <* spaces)
-        funcBodyP = between (char '{' <* spaces) (char '}') $ many statementP
+        functionP = Function <$> dataTypeP <* spaces <*> identifierP <*> funcArgsP <* spaces <*> funcBodyP
+        funcArgsP = between (char '(') (char ')') $ sepBy identifierP (char ',' <* spaces)
+        funcBodyP = between (char '{' <* spaces) (char '}' <* spaces) $ many statementP
 
         -- statement
         statementP =
                 IfStm <$> ifP
             <|> WhileStm <$> whileP
-            <|> statementSMP <* spaces <* char ';' <* spaces
+            <|> statementSMP <* char ';' <* spaces
 
         statementSMP =
                 try (ReturnStm <$> returnP)
             <|> try (AssignmentStm <$> assignmentP)
             <|> ExpressionStm <$> expressionP
 
-        -- return
-        returnP = string "return" *> spaces *> expressionP
-
         -- if
-        ifP = If <$> (string "if" *> spaces *> condP) <* spaces <*> funcBodyP <* spaces <*> ifElseP
-        condP = between (char '(') (char ')') $ between spaces spaces expressionP
-        ifElseP = option [] $ string "else" *> spaces *> funcBodyP <* spaces
+        ifP = If <$> (string "if" *> spaces *> condP) <*> funcBodyP <*> ifElseP
+        condP = between (char '(') (char ')' <* spaces) expressionP
+        ifElseP = option [] $ string "else" *> spaces *> funcBodyP
 
         -- while
-        whileP = While <$> (string "while" *> spaces *> condP) <* spaces <*> funcBodyP <* spaces
+        whileP = While <$> (string "while" *> spaces *> condP) <*> funcBodyP
 
-        -- expression
-        expressionP =
-                try (FunctionCallExp <$> functionCallP)
-            <|> IdentifierExp <$> identifierP
-            <|> ValueExp <$> valueP
-            <|> between (char '(' <* spaces) (spaces *> char ')') expressionP
+        -- return
+        returnP = string "return" *> spaces *> expressionP
 
         -- assignment
         assignmentP = Assignment <$> identifierP <* spaces <* char '=' <* spaces <*> expressionP
 
+        -- expression
+        expressionP = eqP
+
+        -- operators
+        eqP = opP addP eqP [("equal", "==")]
+        addP = opP mulP addP [("add", "+"), ("sub", "-")]
+        mulP = opP primaryP mulP [("mul", "*"), ("div", "/")]
+
+        opP next same ops =
+                try (opFunc <$> next <*> choice (map opsP ops) <* spaces <*> same)
+            <|> next
+
+        opsP (name, op) = string op *> return name
+
+        opFunc expr1 func expr2 = FunctionCallExp $ FunctionCall func [expr1, expr2]
+
+        -- other expressions
+        primaryP =
+                try (FunctionCallExp <$> functionCallP)
+            <|> IdentifierExp <$> identifierP <* spaces
+            <|> ValueExp <$> valueP <* spaces
+            <|> between (char '(') (char ')' <* spaces) expressionP
+
         -- function call
-        functionCallP = FunctionCall <$> identifierP <* spaces <*> between (char '(' <* spaces) (spaces *> char ')') callArgsP
-        callArgsP = sepBy expressionP (spaces *> char ',' <* spaces)
+        functionCallP = FunctionCall <$> identifierP <*> callArgsP
+        callArgsP = between (char '(') (char ')' <* spaces) exprListP
+        exprListP = sepBy expressionP (char ',' <* spaces)
 
         -- etc
         dataTypeP =

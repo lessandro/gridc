@@ -6,7 +6,7 @@ GOTO
 # call equal
 # ["n"]
 PEEK << -1
-PUSH 1
+PUSH 0
 EQUAL
 IFFGOTO @L0
 PUSH 1
@@ -80,7 +80,7 @@ POP
 GOTO << @L5
 @L4
 @L5
-# assign f1
+# call add
 # call fib
 # call sub
 # ["n"]
@@ -88,30 +88,20 @@ PEEK << -1
 PUSH 1
 SUB
 CALL @fib
-# assign f2
 # call fib
 # call sub
-# ["n","f1"]
+# ["n","fib retval"]
 PEEK << -2
 PUSH 2
 SUB
 CALL @fib
-# call add
-# ["n","f1","f2"]
-PEEK << -2
-# ["n","f1","f2","temp f1"]
-PEEK << -2
 ADD
 STORE retval
-# ret, pop locals ["n","f1","f2"]
-POP
-POP
+# ret, pop locals ["n"]
 POP
 PUSH retval
 RETURN
-# scope exit, pop ["f1","f2","add retval"]
-POP
-POP
+# scope exit, pop ["add retval"]
 POP
 # end @fib
 
@@ -353,51 +343,12 @@ POP
 CALL @nums
 # pop expr stm
 POP
-# assign k
-PUSH 1
-# ["k"]
-PEEK << -1
-IFFGOTO @L10
-# call print
-PUSH 1
-PRINT
-PUSH 0
-# pop expr stm
-POP
-GOTO << @L11
-@L10
-# call print
-PUSH 2
-PRINT
-PUSH 0
-# pop expr stm
-POP
-@L11
-PUSH 1
-IFFGOTO @L12
-# call print
-PUSH 1
-PRINT
-PUSH 0
-# pop expr stm
-POP
-GOTO << @L13
-@L12
-# call print
-PUSH 2
-PRINT
-PUSH 0
-# pop expr stm
-POP
-@L13
 PUSH 0
 STORE retval
-# ret, pop locals ["k"]
-POP
+# ret, pop locals []
 PUSH retval
 RETURN
-# scope exit, pop ["k","0"]
-POP
+# scope exit, pop ["0"]
 POP
 # end @main
 
