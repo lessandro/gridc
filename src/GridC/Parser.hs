@@ -8,8 +8,8 @@ import GridC.AST
 parseGC :: String -> Program
 parseGC input =
     case parse programP "" input of
+        Left e -> error $ showError input e
         Right program -> program
-        Left e -> error $ show e
     where
         -- program
         programP = Program <$> (spaces *> many (functionP <* spaces)) <* eof
@@ -45,3 +45,12 @@ parseGC input =
                 IntType <$ string "int"
             <|> FloatType <$ string "float"
         identifierP = (++) <$> many1 letter <*> many alphaNum
+
+showError :: String -> ParseError -> String
+showError src e = init $ unlines [show e, line0, line1, column]
+    where
+        line0 = if 0 > lineNum - 2 then "" else lines src !! (lineNum - 2)
+        line1 = lines src !! (lineNum - 1)
+        lineNum = sourceLine $ errorPos e
+        column = replicate (colNum - 1) ' ' ++ "^"
+        colNum = sourceColumn $ errorPos e
