@@ -3,9 +3,9 @@
 module GridC.Codegen (codegen) where
 
 import Control.Applicative ((<$>))
-import Control.Lens (makeLenses, (.=), (^.), (%=), (+=), use)
+import Control.Lens (makeLenses, (.=), (%=), (+=), use)
 import Control.Monad (liftM)
-import Control.Monad.State (State, evalState, get)
+import Control.Monad.State (State, evalState)
 import Data.Char (toUpper)
 import Data.List (elemIndex)
 
@@ -64,20 +64,27 @@ genFunction function = do
 
 genBody :: [Statement] -> Generator
 genBody statements = do
-    s <- get
+    oldLocals <- use locals
     code <- concatMapM genStatement statements
-    locals .= s^.locals
-    return code
+    newLocals <- use locals
+    locals .= oldLocals
+
+    let
+        diff = drop (length oldLocals) newLocals
+        comment = ["# scope exit, pop " ++ show diff | not $ null popLocals]
+        popLocals = map (const "POP") diff
+
+    return $ code ++ comment ++ popLocals
 
 genStatement :: Statement -> Generator
 genStatement (ReturnStm expression) = do
-    s <- get
+    allLocals <- use locals
     code <- genExpression expression
 
     let
         saveRet = ["STORE retval"]
-        comment = "# popping locals " ++ show (s^.locals)
-        popLocals = comment : map (const "POP") (s^.locals)
+        comment = "# ret, pop locals " ++ show allLocals
+        popLocals = comment : map (const "POP") allLocals
         pushRet = ["PUSH retval"]
         ret = ["RETURN"]
 
@@ -97,7 +104,7 @@ genStatement (AssignmentStm (Assignment name expression)) = do
 genStatement (ExpressionStm expression) = do
     code <- genExpression expression
     locals %= init
-    return $ code ++ ["POP"]
+    return $ code ++ ["# pop expr stm", "POP"]
 
 genStatement (IfStm (If condition thenBody elseBody)) = do
     let

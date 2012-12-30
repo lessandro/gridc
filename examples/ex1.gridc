@@ -35,11 +35,23 @@ int assigntest(a)
     print(k);
 }
 
+int scope()
+{
+    a = 100;
+    if (1) {
+        b = 101;
+        print(b);
+        a = 102;
+    }
+    print(a);
+}
+
 int main()
 {
     print(factorial(4));
     print(fib(10));
     assigntest(10);
+    scope();
 
     k = 0;
 

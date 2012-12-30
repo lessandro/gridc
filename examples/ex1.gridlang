@@ -11,10 +11,12 @@ EQUAL
 IFFGOTO @L0
 PUSH 1
 STORE retval
-# popping locals ["n"]
+# ret, pop locals ["n"]
 POP
 PUSH retval
 RETURN
+# scope exit, pop ["1"]
+POP
 GOTO << @L1
 @L0
 @L1
@@ -33,11 +35,14 @@ PEEK << -2
 PEEK << -2
 MUL
 STORE retval
-# popping locals ["n","f"]
+# ret, pop locals ["n","f"]
 POP
 POP
 PUSH retval
 RETURN
+# scope exit, pop ["f","mul retval"]
+POP
+POP
 # end @factorial
 
 @fib
@@ -49,10 +54,12 @@ EQUAL
 IFFGOTO @L2
 PUSH 0
 STORE retval
-# popping locals ["n"]
+# ret, pop locals ["n"]
 POP
 PUSH retval
 RETURN
+# scope exit, pop ["0"]
+POP
 GOTO << @L3
 @L2
 @L3
@@ -64,10 +71,12 @@ EQUAL
 IFFGOTO @L4
 PUSH 1
 STORE retval
-# popping locals ["n"]
+# ret, pop locals ["n"]
 POP
 PUSH retval
 RETURN
+# scope exit, pop ["1"]
+POP
 GOTO << @L5
 @L4
 @L5
@@ -94,12 +103,16 @@ PEEK << -2
 PEEK << -2
 ADD
 STORE retval
-# popping locals ["n","f1","f2"]
+# ret, pop locals ["n","f1","f2"]
 POP
 POP
 POP
 PUSH retval
 RETURN
+# scope exit, pop ["f1","f2","add retval"]
+POP
+POP
+POP
 # end @fib
 
 @assigntest
@@ -108,6 +121,7 @@ RETURN
 PEEK << -1
 PRINT
 PUSH 0
+# pop expr stm
 POP
 PUSH 20
 PUSH -1
@@ -118,6 +132,7 @@ POKE
 PEEK << -1
 PRINT
 PUSH 0
+# pop expr stm
 POP
 # assign k
 PUSH 30
@@ -126,6 +141,7 @@ PUSH 30
 PEEK << -1
 PRINT
 PUSH 0
+# pop expr stm
 POP
 PUSH 40
 PUSH -1
@@ -136,15 +152,60 @@ POKE
 PEEK << -1
 PRINT
 PUSH 0
+# pop expr stm
 POP
 PUSH 0
 STORE retval
-# popping locals ["a","k"]
+# ret, pop locals ["a","k"]
 POP
 POP
 PUSH retval
 RETURN
+# scope exit, pop ["k","0"]
+POP
+POP
 # end @assigntest
+
+@scope
+# assign a
+PUSH 100
+PUSH 1
+IFFGOTO @L6
+# assign b
+PUSH 101
+# call print
+# ["a","b"]
+PEEK << -1
+PRINT
+PUSH 0
+# pop expr stm
+POP
+PUSH 102
+PUSH -2
+SWAP
+POKE
+# scope exit, pop ["b"]
+POP
+GOTO << @L7
+@L6
+@L7
+# call print
+# ["a"]
+PEEK << -1
+PRINT
+PUSH 0
+# pop expr stm
+POP
+PUSH 0
+STORE retval
+# ret, pop locals ["a"]
+POP
+PUSH retval
+RETURN
+# scope exit, pop ["a","0"]
+POP
+POP
+# end @scope
 
 @main
 # call print
@@ -153,6 +214,7 @@ PUSH 4
 CALL @factorial
 PRINT
 PUSH 0
+# pop expr stm
 POP
 # call print
 # call fib
@@ -160,35 +222,27 @@ PUSH 10
 CALL @fib
 PRINT
 PUSH 0
+# pop expr stm
 POP
 # call assigntest
 PUSH 10
 CALL @assigntest
+# pop expr stm
+POP
+# call scope
+CALL @scope
+# pop expr stm
 POP
 # assign k
 PUSH 0
 # ["k"]
 PEEK << -1
-IFFGOTO @L6
-# call print
-PUSH 1
-PRINT
-PUSH 0
-POP
-GOTO << @L7
-@L6
-# call print
-PUSH 2
-PRINT
-PUSH 0
-POP
-@L7
-PUSH 1
 IFFGOTO @L8
 # call print
 PUSH 1
 PRINT
 PUSH 0
+# pop expr stm
 POP
 GOTO << @L9
 @L8
@@ -196,14 +250,35 @@ GOTO << @L9
 PUSH 2
 PRINT
 PUSH 0
+# pop expr stm
 POP
 @L9
+PUSH 1
+IFFGOTO @L10
+# call print
+PUSH 1
+PRINT
+PUSH 0
+# pop expr stm
+POP
+GOTO << @L11
+@L10
+# call print
+PUSH 2
+PRINT
+PUSH 0
+# pop expr stm
+POP
+@L11
 PUSH 0
 STORE retval
-# popping locals ["k"]
+# ret, pop locals ["k"]
 POP
 PUSH retval
 RETURN
+# scope exit, pop ["k","0"]
+POP
+POP
 # end @main
 
 @end
