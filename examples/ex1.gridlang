@@ -288,16 +288,62 @@ PRINT
 PUSH 0
 # pop expr stm
 POP
+# assign e
+# call add
+PUSH 1
+# call add
+# call mul
+PUSH 2
+PUSH 3
+MUL
+# call mul
+PUSH 4
+PUSH 5
+MUL
+ADD
+ADD
+# assign f
+# call add
+PUSH 1
+# call add
+# call mul
+PUSH 2
+PUSH 3
+MUL
+# call mul
+PUSH 4
+PUSH 5
+MUL
+ADD
+ADD
+# call print
+# ["a","b","c","d","e","f"]
+PEEK << -2
+PRINT
+PUSH 0
+# pop expr stm
+POP
+# call print
+# ["a","b","c","d","e","f"]
+PEEK << -1
+PRINT
+PUSH 0
+# pop expr stm
+POP
 PUSH 0
 STORE retval
-# ret, pop locals ["a","b","c","d"]
+# ret, pop locals ["a","b","c","d","e","f"]
+POP
+POP
 POP
 POP
 POP
 POP
 PUSH retval
 RETURN
-# scope exit, pop ["a","b","c","d","0"]
+# scope exit, pop ["a","b","c","d","e","f","0"]
+POP
+POP
 POP
 POP
 POP
