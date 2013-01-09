@@ -144,6 +144,7 @@ genCall :: Identifier -> [Code]
 genCall name
     | name `elem` ops0 = [upperName, "PUSH 0"]
     | name `elem` ops1 = [upperName]
+    | name == "ffi" = ["FFI"]
     | otherwise = ["CALL @" ++ name]
     where upperName = map toUpper name
 
@@ -166,6 +167,10 @@ genExpression (IdentifierExp name) = do
             locals %= (++ ["temp " ++ name])
             return ["# " ++ showLocals, "PEEK << " ++ show pos]
         Nothing -> error $ "identifier " ++ name ++ " not in scope"
+
+genExpression (ConstantExp name) = do
+    locals %= (++ ["temp " ++ name])
+    return ["PUSH " ++ name]
 
 findLocal :: Identifier -> State GenState (Maybe Int)
 findLocal name = do

@@ -64,6 +64,7 @@ parseGC input =
         primaryP =
                 try (FunctionCallExp <$> functionCallP)
             <|> IdentifierExp <$> identifierP <* spaces
+            <|> ConstantExp <$> constantP <* spaces
             <|> ValueExp <$> valueP <* spaces
             <|> between (char '(') (char ')' <* spaces) expressionP
 
@@ -78,6 +79,8 @@ parseGC input =
             <|> FloatType <$ string "float"
 
         identifierP = (++) <$> many1 letter <*> many alphaNum
+
+        constantP = (:) <$> char '@' <*> many alphaNum
 
         valueP = option "" (string "-") `cc` many1 digit `cc` fractionP
         fractionP = option "" $ string "." `cc` many1 digit

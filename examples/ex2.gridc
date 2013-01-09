@@ -1,0 +1,32 @@
+int sweep(dir) {
+    n = 100;
+    while (n) {
+        if (ffi(@LOOK, @EAST)) {
+            ffi(@PULL, @EAST);
+        }
+        if (ffi(@LOOK, @WEST)) {
+            ffi(@PULL, @WEST);
+        }
+        if (ffi(@LOOK, dir)) {
+            ffi(@PULL, dir);
+        }
+        ffi(@MOVE, dir);
+        n = n - 1;
+    }
+}
+
+int main() {
+    while (1) {
+        sweep(@NORTH);
+        ffi(@MOVE, @EAST);
+        ffi(@MOVE, @EAST);
+        ffi(@MOVE, @EAST);
+        
+        sweep(@SOUTH);
+        ffi(@MOVE, @EAST);
+        ffi(@MOVE, @EAST);
+        ffi(@MOVE, @EAST);
+    }
+
+    return 0;
+}

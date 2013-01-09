@@ -1,0 +1,149 @@
+CALL @main
+PUSH @end
+GOTO
+
+@sweep
+# assign n
+PUSH 100
+@L0
+# ["dir","n"]
+PEEK << -1
+IFFGOTO @L7
+# call ffi
+PUSH @LOOK
+PUSH @EAST
+FFI
+IFFGOTO @L1
+# call ffi
+PUSH @PULL
+PUSH @EAST
+FFI
+# pop expr stm
+POP
+GOTO << @L2
+@L1
+@L2
+# call ffi
+PUSH @LOOK
+PUSH @WEST
+FFI
+IFFGOTO @L3
+# call ffi
+PUSH @PULL
+PUSH @WEST
+FFI
+# pop expr stm
+POP
+GOTO << @L4
+@L3
+@L4
+# call ffi
+PUSH @LOOK
+# ["dir","n","temp @LOOK"]
+PEEK << -3
+FFI
+IFFGOTO @L5
+# call ffi
+PUSH @PULL
+# ["dir","n","temp @PULL"]
+PEEK << -3
+FFI
+# pop expr stm
+POP
+GOTO << @L6
+@L5
+@L6
+# call ffi
+PUSH @MOVE
+# ["dir","n","temp @MOVE"]
+PEEK << -3
+FFI
+# pop expr stm
+POP
+# call sub
+# ["dir","n"]
+PEEK << -1
+PUSH 1
+SUB
+PUSH -1
+SWAP
+POKE
+GOTO << @L0
+PUSH @L0
+@L7
+PUSH 0
+STORE retval
+# ret, pop locals ["dir","n"]
+POP
+POP
+PUSH retval
+RETURN
+# scope exit, pop ["n","0"]
+POP
+POP
+# end @sweep
+
+@main
+@L8
+PUSH 1
+IFFGOTO @L9
+# call sweep
+PUSH @NORTH
+CALL @sweep
+# pop expr stm
+POP
+# call ffi
+PUSH @MOVE
+PUSH @EAST
+FFI
+# pop expr stm
+POP
+# call ffi
+PUSH @MOVE
+PUSH @EAST
+FFI
+# pop expr stm
+POP
+# call ffi
+PUSH @MOVE
+PUSH @EAST
+FFI
+# pop expr stm
+POP
+# call sweep
+PUSH @SOUTH
+CALL @sweep
+# pop expr stm
+POP
+# call ffi
+PUSH @MOVE
+PUSH @EAST
+FFI
+# pop expr stm
+POP
+# call ffi
+PUSH @MOVE
+PUSH @EAST
+FFI
+# pop expr stm
+POP
+# call ffi
+PUSH @MOVE
+PUSH @EAST
+FFI
+# pop expr stm
+POP
+GOTO << @L8
+PUSH @L8
+@L9
+PUSH 0
+STORE retval
+# ret, pop locals []
+PUSH retval
+RETURN
+# scope exit, pop ["0"]
+POP
+# end @main
+
+@end
+END

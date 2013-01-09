@@ -41,6 +41,7 @@ data Expression =
     FunctionCallExp FunctionCall
     | ValueExp String
     | IdentifierExp String
+    | ConstantExp String
     deriving (Show)
 
 data FunctionCall = FunctionCall {
