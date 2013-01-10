@@ -1,4 +1,4 @@
-CALL @main
+CALL << @main
 END
 
 @factorial
@@ -28,7 +28,7 @@ POPN << 0
 PEEK << -1
 PUSH 1
 SUB
-CALL @factorial
+CALL << @factorial
 # call mul
 # ["n","f"]
 PEEK << -2
@@ -90,14 +90,14 @@ POPN << 0
 PEEK << -1
 PUSH 1
 SUB
-CALL @fib
+CALL << @fib
 # call fib
 # call sub
 # ["n","fib retval"]
 PEEK << -2
 PUSH 2
 SUB
-CALL @fib
+CALL << @fib
 ADD
 STORE retval
 # ret, pop locals ["n"]
@@ -342,7 +342,7 @@ POPN << 7
 # call print
 # call factorial
 PUSH 4
-CALL @factorial
+CALL << @factorial
 PRINT
 PUSH 0
 # pop expr stm
@@ -350,7 +350,7 @@ POP
 # call print
 # call fib
 PUSH 10
-CALL @fib
+CALL << @fib
 PRINT
 PUSH 0
 # pop expr stm
@@ -358,22 +358,22 @@ POP
 # call print
 # call fib2
 PUSH 10
-CALL @fib2
+CALL << @fib2
 PRINT
 PUSH 0
 # pop expr stm
 POP
 # call assigntest
 PUSH 10
-CALL @assigntest
+CALL << @assigntest
 # pop expr stm
 POP
 # call scope
-CALL @scope
+CALL << @scope
 # pop expr stm
 POP
 # call nums
-CALL @nums
+CALL << @nums
 # pop expr stm
 POP
 PUSH 0

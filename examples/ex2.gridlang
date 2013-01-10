@@ -1,4 +1,4 @@
-CALL @main
+CALL << @main
 END
 
 @sweep
@@ -100,7 +100,7 @@ PUSH 1
 IFFGOTO << @L9
 # call sweep
 PUSH @NORTH
-CALL @sweep
+CALL << @sweep
 # pop expr stm
 POP
 # call ffi
@@ -123,7 +123,7 @@ FFI
 POP
 # call sweep
 PUSH @SOUTH
-CALL @sweep
+CALL << @sweep
 # pop expr stm
 POP
 # call ffi

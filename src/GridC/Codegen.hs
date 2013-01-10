@@ -45,7 +45,7 @@ codegen program = evalState (genProgram program) emptyState
 genProgram :: Program -> Generator
 genProgram (Program functions) = do
     let
-        begin = ["CALL @main", "END", ""]
+        begin = ["CALL << @main", "END", ""]
 
     code <- concatMapM genFunction functions
     return $ begin ++ code
@@ -144,7 +144,7 @@ genCall name
     | name `elem` ops0 = [upperName, "PUSH 0"]
     | name `elem` ops1 = [upperName]
     | name == "ffi" = ["FFI"]
-    | otherwise = ["CALL @" ++ name]
+    | otherwise = ["CALL << @" ++ name]
     where upperName = map toUpper name
 
 genExpression :: Expression -> Generator
