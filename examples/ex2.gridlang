@@ -11,12 +11,12 @@ IFFGOTO << @L7
 # call ffi
 PUSH @LOOK
 PUSH @EAST
-FFI
+CALLFF << 2
 IFFGOTO << @L1
 # call ffi
 PUSH @PULL
 PUSH @EAST
-FFI
+CALLFF << 2
 # pop expr stm
 POP
 # scope exit, pop []
@@ -29,12 +29,12 @@ POPN << 0
 # call ffi
 PUSH @LOOK
 PUSH @WEST
-FFI
+CALLFF << 2
 IFFGOTO << @L3
 # call ffi
 PUSH @PULL
 PUSH @WEST
-FFI
+CALLFF << 2
 # pop expr stm
 POP
 # scope exit, pop []
@@ -48,13 +48,13 @@ POPN << 0
 PUSH @LOOK
 # ["dir","n","temp @LOOK"]
 PEEK << -3
-FFI
+CALLFF << 2
 IFFGOTO << @L5
 # call ffi
 PUSH @PULL
 # ["dir","n","temp @PULL"]
 PEEK << -3
-FFI
+CALLFF << 2
 # pop expr stm
 POP
 # scope exit, pop []
@@ -68,7 +68,7 @@ POPN << 0
 PUSH @MOVE
 # ["dir","n","temp @MOVE"]
 PEEK << -3
-FFI
+CALLFF << 2
 # pop expr stm
 POP
 # call sub
@@ -106,19 +106,19 @@ POP
 # call ffi
 PUSH @MOVE
 PUSH @EAST
-FFI
+CALLFF << 2
 # pop expr stm
 POP
 # call ffi
 PUSH @MOVE
 PUSH @EAST
-FFI
+CALLFF << 2
 # pop expr stm
 POP
 # call ffi
 PUSH @MOVE
 PUSH @EAST
-FFI
+CALLFF << 2
 # pop expr stm
 POP
 # call sweep
@@ -129,19 +129,19 @@ POP
 # call ffi
 PUSH @MOVE
 PUSH @EAST
-FFI
+CALLFF << 2
 # pop expr stm
 POP
 # call ffi
 PUSH @MOVE
 PUSH @EAST
-FFI
+CALLFF << 2
 # pop expr stm
 POP
 # call ffi
 PUSH @MOVE
 PUSH @EAST
-FFI
+CALLFF << 2
 # pop expr stm
 POP
 # scope exit, pop []

@@ -139,11 +139,11 @@ genStatement (WhileStm (While condition body)) = do
 
     return $ [topLabel] ++ condCode ++ check ++ bodyCode ++ end
 
-genCall :: Identifier -> [Code]
-genCall name
+genCall :: Identifier -> Int -> [Code]
+genCall name arity
     | name `elem` ops0 = [upperName, "PUSH 0"]
     | name `elem` ops1 = [upperName]
-    | name == "ffi" = ["FFI"]
+    | name == "ffi" = ["CALLFF << " ++ show arity]
     | otherwise = ["CALL << @" ++ name]
     where upperName = map toUpper name
 
@@ -152,11 +152,11 @@ genExpression (ValueExp value) = do
     locals %= (++ [value])
     return ["PUSH " ++ value]
 
-genExpression (FunctionCallExp (FunctionCall name argNames)) = do
-    args <- concatMapM genExpression argNames
-    locals %= (reverse . drop (length argNames) . reverse)
+genExpression (FunctionCallExp (FunctionCall name argExps)) = do
+    args <- concatMapM genExpression argExps
+    locals %= (reverse . drop (length argExps) . reverse)
     locals %= (++ [name ++ " retval"])
-    return $ ["# call " ++ name] ++ args ++ genCall name
+    return $ ["# call " ++ name] ++ args ++ genCall name (length argExps)
 
 genExpression (IdentifierExp name) = do
     showLocals <- show <$> use locals
