@@ -45,11 +45,10 @@ codegen program = evalState (genProgram program) emptyState
 genProgram :: Program -> Generator
 genProgram (Program functions) = do
     let
-        begin = ["CALL @main", "PUSH @end", "GOTO", ""]
-        end = ["@end", "END"]
+        begin = ["CALL @main", "END", ""]
 
     code <- concatMapM genFunction functions
-    return $ begin ++ code ++ end
+    return $ begin ++ code
 
 genFunction :: Function -> Generator
 genFunction function = do

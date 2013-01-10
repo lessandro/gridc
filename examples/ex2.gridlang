@@ -1,6 +1,5 @@
 CALL @main
-PUSH @end
-GOTO
+END
 
 @sweep
 # assign n
@@ -145,5 +144,3 @@ RETURN
 POP
 # end @main
 
-@end
-END

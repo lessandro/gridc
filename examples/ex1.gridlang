@@ -1,6 +1,5 @@
 CALL @main
-PUSH @end
-GOTO
+END
 
 @factorial
 # call equal
@@ -398,5 +397,3 @@ RETURN
 POP
 # end @main
 
-@end
-END
