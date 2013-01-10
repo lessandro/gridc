@@ -77,7 +77,7 @@ genBody statements = do
     let
         diff = drop (length oldLocals) newLocals
         comment = ["# scope exit, pop " ++ show diff | not $ null popLocals]
-        popLocals = map (const "POP") diff
+        popLocals = ["POPN << " ++ show (length diff)]
 
     return $ code ++ comment ++ popLocals
 
@@ -89,7 +89,7 @@ genStatement (ReturnStm expression) = do
     let
         saveRet = ["STORE retval"]
         comment = "# ret, pop locals " ++ show allLocals
-        popLocals = comment : map (const "POP") allLocals
+        popLocals = [comment, "POPN << " ++ show (length allLocals)]
         pushRet = ["PUSH retval"]
         ret = ["RETURN"]
 
@@ -120,7 +120,7 @@ genStatement (IfStm (If condition thenBody elseBody)) = do
     endLabel <- newLabel
 
     let
-        check = ["IFFGOTO " ++ elseLabel]
+        check = ["IFFGOTO << " ++ elseLabel]
         middle = ["GOTO << " ++ endLabel, elseLabel]
         end = [endLabel]
 
@@ -134,7 +134,7 @@ genStatement (WhileStm (While condition body)) = do
     endLabel <- newLabel
 
     let
-        check = ["IFFGOTO " ++ endLabel]
+        check = ["IFFGOTO << " ++ endLabel]
         end = ["GOTO << " ++ topLabel, "PUSH " ++ topLabel, endLabel]
 
     return $ [topLabel] ++ condCode ++ check ++ bodyCode ++ end

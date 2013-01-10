@@ -7,17 +7,19 @@ END
 PEEK << -1
 PUSH 0
 EQUAL
-IFFGOTO @L0
+IFFGOTO << @L0
 PUSH 1
 STORE retval
 # ret, pop locals ["n"]
-POP
+POPN << 1
 PUSH retval
 RETURN
 # scope exit, pop ["1"]
-POP
+POPN << 1
 GOTO << @L1
 @L0
+# scope exit, pop []
+POPN << 0
 @L1
 # assign f
 # call factorial
@@ -35,13 +37,11 @@ PEEK << -2
 MUL
 STORE retval
 # ret, pop locals ["n","f"]
-POP
-POP
+POPN << 2
 PUSH retval
 RETURN
 # scope exit, pop ["f","mul retval"]
-POP
-POP
+POPN << 2
 # end @factorial
 
 @fib
@@ -50,34 +50,38 @@ POP
 PEEK << -1
 PUSH 0
 EQUAL
-IFFGOTO @L2
+IFFGOTO << @L2
 PUSH 0
 STORE retval
 # ret, pop locals ["n"]
-POP
+POPN << 1
 PUSH retval
 RETURN
 # scope exit, pop ["0"]
-POP
+POPN << 1
 GOTO << @L3
 @L2
+# scope exit, pop []
+POPN << 0
 @L3
 # call equal
 # ["n"]
 PEEK << -1
 PUSH 1
 EQUAL
-IFFGOTO @L4
+IFFGOTO << @L4
 PUSH 1
 STORE retval
 # ret, pop locals ["n"]
-POP
+POPN << 1
 PUSH retval
 RETURN
 # scope exit, pop ["1"]
-POP
+POPN << 1
 GOTO << @L5
 @L4
+# scope exit, pop []
+POPN << 0
 @L5
 # call add
 # call fib
@@ -97,11 +101,11 @@ CALL @fib
 ADD
 STORE retval
 # ret, pop locals ["n"]
-POP
+POPN << 1
 PUSH retval
 RETURN
 # scope exit, pop ["add retval"]
-POP
+POPN << 1
 # end @fib
 
 @fib2
@@ -112,7 +116,7 @@ PUSH 1
 @L6
 # ["n","a","b"]
 PEEK << -3
-IFFGOTO @L7
+IFFGOTO << @L7
 # assign c
 # ["n","a","b"]
 PEEK << -2
@@ -139,7 +143,7 @@ PUSH -4
 SWAP
 POKE
 # scope exit, pop ["c"]
-POP
+POPN << 1
 GOTO << @L6
 PUSH @L6
 @L7
@@ -147,15 +151,11 @@ PUSH @L6
 PEEK << -2
 STORE retval
 # ret, pop locals ["n","a","b"]
-POP
-POP
-POP
+POPN << 3
 PUSH retval
 RETURN
 # scope exit, pop ["a","b","temp a"]
-POP
-POP
-POP
+POPN << 3
 # end @fib2
 
 @assigntest
@@ -200,20 +200,18 @@ POP
 PUSH 0
 STORE retval
 # ret, pop locals ["a","k"]
-POP
-POP
+POPN << 2
 PUSH retval
 RETURN
 # scope exit, pop ["k","0"]
-POP
-POP
+POPN << 2
 # end @assigntest
 
 @scope
 # assign a
 PUSH 100
 PUSH 1
-IFFGOTO @L8
+IFFGOTO << @L8
 # assign b
 PUSH 101
 # call print
@@ -228,9 +226,11 @@ PUSH -2
 SWAP
 POKE
 # scope exit, pop ["b"]
-POP
+POPN << 1
 GOTO << @L9
 @L8
+# scope exit, pop []
+POPN << 0
 @L9
 # call print
 # ["a"]
@@ -242,12 +242,11 @@ POP
 PUSH 0
 STORE retval
 # ret, pop locals ["a"]
-POP
+POPN << 1
 PUSH retval
 RETURN
 # scope exit, pop ["a","0"]
-POP
-POP
+POPN << 2
 # end @scope
 
 @nums
@@ -332,22 +331,11 @@ POP
 PUSH 0
 STORE retval
 # ret, pop locals ["a","b","c","d","e","f"]
-POP
-POP
-POP
-POP
-POP
-POP
+POPN << 6
 PUSH retval
 RETURN
 # scope exit, pop ["a","b","c","d","e","f","0"]
-POP
-POP
-POP
-POP
-POP
-POP
-POP
+POPN << 7
 # end @nums
 
 @main
@@ -391,9 +379,10 @@ POP
 PUSH 0
 STORE retval
 # ret, pop locals []
+POPN << 0
 PUSH retval
 RETURN
 # scope exit, pop ["0"]
-POP
+POPN << 1
 # end @main
 
