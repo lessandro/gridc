@@ -107,7 +107,7 @@ doGet _ = return ":)"
 doPost :: String -> IO String
 doPost contents = E.catch code handler
     where
-        code = return $ unlines $ codegen $ parseGC contents
+        code = E.evaluate $ unlines $ codegen $ parseGC contents
         handler = return . show . (`asTypeOf` (undefined :: E.SomeException))
 
 -- Process the HTTP request
