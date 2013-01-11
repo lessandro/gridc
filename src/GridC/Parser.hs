@@ -5,9 +5,18 @@ import Text.ParserCombinators.Parsec
 
 import GridC.AST
 
+uncomment :: String -> String
+uncomment (x:y:xs)
+    | x == y && y == '/' = ""
+    | otherwise = x : uncomment (y : xs)
+uncomment xs = xs
+
+preprocess :: String -> String
+preprocess = unlines . map uncomment . lines
+
 parseGC :: String -> Program
 parseGC input =
-    case parse programP "" input of
+    case parse programP "" (preprocess input) of
         Left e -> error $ showError input e
         Right program -> program
     where

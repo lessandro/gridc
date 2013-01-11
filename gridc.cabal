@@ -11,3 +11,9 @@ executable gridc
   build-depends:  base, parsec, mtl, lens
   main-is:        Main.hs
   hs-source-dirs: src
+
+executable gridc-httpd
+  build-depends:  base, parsec, mtl, lens, network
+  main-is:        Httpd.hs
+  hs-source-dirs: src
+  ghc-options:    -threaded
