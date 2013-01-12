@@ -11,4 +11,4 @@ main = do
     contents <- readFile $ head args
     let ast = parseGC contents
     let output = codegen ast
-    putStr $ unlines output
+    putStr output

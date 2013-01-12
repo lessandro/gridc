@@ -37,8 +37,8 @@ ops1 = words "plus add minus sub mul div min max greater less equal"
 concatMapM :: (Monad m) => (a -> m [b]) -> [a] -> m [b]
 concatMapM f xs = liftM concat (mapM f xs)
 
-codegen :: Program -> [Code]
-codegen program = evalState (genProgram program) emptyState
+codegen :: Program -> String
+codegen program = unlines $ evalState (genProgram program) emptyState
     where
         emptyState = GenState { _locals = [], _jump = 0 }
 
