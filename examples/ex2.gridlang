@@ -1,4 +1,3 @@
-
 CALL << @main
 END
 
@@ -6,7 +5,7 @@ END
 # assign n
 PUSH 100
 @L0
-# ["dir","n"]
+# [Variable ValueType "dir",Variable ValueType "n"]
 PEEK << -1
 IFFGOTO << @L7
 # call ffi
@@ -18,7 +17,6 @@ IFFGOTO << @L1
 PUSH @PULL
 PUSH @EAST
 CALLFF << 2
-# pop expr stm
 POP
 # scope exit, pop []
 POPN << 0
@@ -36,7 +34,6 @@ IFFGOTO << @L3
 PUSH @PULL
 PUSH @WEST
 CALLFF << 2
-# pop expr stm
 POP
 # scope exit, pop []
 POPN << 0
@@ -47,16 +44,15 @@ POPN << 0
 @L4
 # call ffi
 PUSH @LOOK
-# ["dir","n","temp @LOOK"]
+# [Variable ValueType "dir",Variable ValueType "n",Variable ValueType "temp @LOOK"]
 PEEK << -3
 CALLFF << 2
 IFFGOTO << @L5
 # call ffi
 PUSH @PULL
-# ["dir","n","temp @PULL"]
+# [Variable ValueType "dir",Variable ValueType "n",Variable ValueType "temp @PULL"]
 PEEK << -3
 CALLFF << 2
-# pop expr stm
 POP
 # scope exit, pop []
 POPN << 0
@@ -67,18 +63,16 @@ POPN << 0
 @L6
 # call ffi
 PUSH @MOVE
-# ["dir","n","temp @MOVE"]
+# [Variable ValueType "dir",Variable ValueType "n",Variable ValueType "temp @MOVE"]
 PEEK << -3
 CALLFF << 2
-# pop expr stm
 POP
 # call sub
-# ["dir","n"]
+# [Variable ValueType "dir",Variable ValueType "n"]
 PEEK << -1
 PUSH 1
 SUB
 PUSH -1
-SWAP
 POKE
 # scope exit, pop []
 POPN << 0
@@ -87,11 +81,11 @@ PUSH @L0
 @L7
 PUSH 0
 STORE retval
-# ret, pop locals ["dir","n"]
+# ret, pop locals [Variable ValueType "dir",Variable ValueType "n"]
 POPN << 2
 PUSH retval
 RETURN
-# scope exit, pop ["n","0"]
+# scope exit, pop [Variable ValueType "n",Variable ValueType "0"]
 POPN << 2
 # end @sweep
 
@@ -102,48 +96,40 @@ IFFGOTO << @L9
 # call sweep
 PUSH @NORTH
 CALL << @sweep
-# pop expr stm
 POP
 # call ffi
 PUSH @MOVE
 PUSH @EAST
 CALLFF << 2
-# pop expr stm
 POP
 # call ffi
 PUSH @MOVE
 PUSH @EAST
 CALLFF << 2
-# pop expr stm
 POP
 # call ffi
 PUSH @MOVE
 PUSH @EAST
 CALLFF << 2
-# pop expr stm
 POP
 # call sweep
 PUSH @SOUTH
 CALL << @sweep
-# pop expr stm
 POP
 # call ffi
 PUSH @MOVE
 PUSH @EAST
 CALLFF << 2
-# pop expr stm
 POP
 # call ffi
 PUSH @MOVE
 PUSH @EAST
 CALLFF << 2
-# pop expr stm
 POP
 # call ffi
 PUSH @MOVE
 PUSH @EAST
 CALLFF << 2
-# pop expr stm
 POP
 # scope exit, pop []
 POPN << 0
@@ -156,7 +142,7 @@ STORE retval
 POPN << 0
 PUSH retval
 RETURN
-# scope exit, pop ["0"]
+# scope exit, pop [Variable ValueType "0"]
 POPN << 1
 # end @main
 

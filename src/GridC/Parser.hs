@@ -29,10 +29,22 @@ parseGC input =
             <|> (TopFunction <$> functionP)
 
         -- declaration
-        declarationP = Declaration <$> dataTypeP <* spaces <*> identifierP <* char ';' <* spaces
+        declarationP = try arrayDeclarationP <|> valueDeclarationP
+
+        arrayDeclarationP = do
+            _ <- typeP
+            spaces
+            name <- identifierP
+            _ <- char '['
+            size <- many1 digit
+            _ <- string "];"
+            spaces
+            return $ Declaration (arrayC size) name
+
+        valueDeclarationP = Declaration <$> valueTypeP <* spaces <*> identifierP <* char ';' <* spaces
 
         -- function
-        functionP = Function <$> dataTypeP <* spaces <*> identifierP <*> funcArgsP <* spaces <*> funcBodyP
+        functionP = Function <$> valueTypeP <* spaces <*> identifierP <*> funcArgsP <* spaces <*> funcBodyP
         funcArgsP = between (char '(') (char ')') $ sepBy identifierP (char ',' <* spaces)
         funcBodyP = between (char '{' <* spaces) (char '}' <* spaces) $ many statementP
 
@@ -44,6 +56,7 @@ parseGC input =
 
         statementSMP =
                 try (ReturnStm <$> returnP)
+            <|> try (ArrayAssignmentStm <$> arrayAssignmentP)
             <|> try (AssignmentStm <$> assignmentP)
             <|> ExpressionStm <$> expressionP
 
@@ -60,6 +73,9 @@ parseGC input =
 
         -- assignment
         assignmentP = Assignment <$> identifierP <* spaces <* char '=' <* spaces <*> expressionP
+
+        -- array
+        arrayAssignmentP = ArrayAssignment <$> arrayAccessP <* spaces <* char '=' <* spaces <*> expressionP
 
         -- expression
         expressionP = eqP
@@ -80,10 +96,14 @@ parseGC input =
         -- other expressions
         primaryP =
                 try (FunctionCallExp <$> functionCallP)
+            <|> try (ArrayAccessExp <$> arrayAccessP <* spaces)
             <|> IdentifierExp <$> identifierP <* spaces
             <|> ConstantExp <$> constantP <* spaces
             <|> ValueExp <$> valueP <* spaces
             <|> between (char '(') (char ')' <* spaces) expressionP
+
+        -- array access
+        arrayAccessP = ArrayAccess <$> identifierP <* char '[' <*> expressionP <* char ']'
 
         -- function call
         functionCallP = FunctionCall <$> identifierP <*> callArgsP
@@ -91,16 +111,14 @@ parseGC input =
         exprListP = sepBy expressionP (char ',' <* spaces)
 
         -- types
-        dataTypeP =
-                try (arrayC <$> (typeP *> char '[' *> many1 digit) <* char ']')
-            <|> ValueType <$ typeP
-
-        arrayC = ArrayType . atoi
-        atoi s = read s :: Int
+        valueTypeP = ValueType <$ typeP
 
         typeP =
                 string "int"
             <|> string "float"
+
+        arrayC = ArrayType . atoi
+        atoi s = read s :: Int
 
         -- etc
         identifierP = (++) <$> many1 letter <*> many (alphaNum <|> char '_')

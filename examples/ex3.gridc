@@ -1,5 +1,14 @@
+int b[10];
 int a;
-int[10] b;
+
+int arr_test() {
+    b = 10;
+    print(b[0]);
+
+    b[1] = 3;
+    b[b[1]] = 4;
+    print(b[3]);
+}
 
 int g() {
     a = 3;
@@ -8,9 +17,12 @@ int g() {
 int f(a) {
     g();
     a = 2;
+    print(a);
 }
 
 int main() {
     f(1);
     print(a);
+
+    arr_test();
 }

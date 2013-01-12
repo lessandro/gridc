@@ -1,33 +1,50 @@
-{-# LANGUAGE TemplateHaskell, Rank2Types, NoMonomorphismRestriction #-}
+{-# LANGUAGE Rank2Types, NoMonomorphismRestriction #-}
 
 module GridC.Codegen (codegen) where
 
 import Control.Applicative ((<$>))
-import Control.Lens (makeLenses, (.=), (%=), (+=), use)
+import Control.Lens ((.=), (%=), (+=), use)
 import Control.Monad (liftM, mplus)
 import Control.Monad.State.Strict (State, evalState)
 import Data.Char (toUpper)
-import Data.List (elemIndex)
 
 import GridC.AST
 
 type Code = String
 
+data Variable = Variable DataType String
+    deriving (Show)
+
 data GenState = GenState {
-    _locals :: [Identifier],
-    _globals :: [Identifier],
+    _locals :: [Variable],
+    _globals :: [Variable],
     _jump :: Int
 }
 
-makeLenses ''GenState
+type Generator = State GenState [Code]
+
+-- define lenses
+
+locals :: Functor f => ([Variable] -> f [Variable]) -> GenState -> f GenState
+locals f (GenState a b c) = fmap (\a' -> GenState a' b c) (f a)
+
+globals :: Functor f => ([Variable] -> f [Variable]) -> GenState -> f GenState
+globals f (GenState a b c) = fmap (\b' -> GenState a b' c) (f b)
+
+jump :: Functor f => (Int -> f Int) -> GenState -> f GenState
+jump f (GenState a b c) = fmap (GenState a b) (f c)
+
+--
+
+newLocal :: String -> State GenState ()
+newLocal name =
+    locals %= (++ [Variable ValueType name])
 
 newLabel :: State GenState String
 newLabel = do
     val <- use jump
     jump += 1
     return $ "@L" ++ show val
-
-type Generator = State GenState [Code]
 
 -- opcodes that return 0 values
 ops0 :: [String]
@@ -46,12 +63,16 @@ concatMapM f xs = liftM concat (mapM f xs)
 codegen :: Program -> String
 codegen program = unlines $ evalState (genProgram program) emptyState
     where
-        emptyState = GenState { _locals = [], _globals = [], _jump = 0 }
+        emptyState = GenState {
+            _locals = [],
+            _globals = [],
+            _jump = 0
+        }
 
 genProgram :: Program -> Generator
 genProgram (Program topLevels) = do
     let
-        begin = ["", "CALL << @main", "END", ""]
+        begin = ["CALL << @main", "END", ""]
 
     code <- concatMapM genTopLevel topLevels
     alloc <- allocGlobals
@@ -60,12 +81,39 @@ genProgram (Program topLevels) = do
 allocGlobals :: Generator
 allocGlobals = do
     allGlobals <- use globals
-    return $ replicate (length allGlobals) "PUSH 0"
+    let n = sum $ map variableSize allGlobals
+    case n of
+        0 -> return []
+        _ -> return [
+            "PUSH " ++ show n,
+            "@globals",
+            "PUSH 0",
+            "SWAP",
+            "SUB << 1",
+            "DUP",
+            "IFTGOTO << @globals",
+            "POP",
+            ""]
+
+typeSize :: DataType -> Int
+typeSize ValueType = 1
+typeSize (ArrayType n) = n
+
+variable :: Declaration -> Variable
+variable (Declaration dataType name) =
+    Variable dataType name
+
+variableSize :: Variable -> Int
+variableSize (Variable dataType _) = typeSize dataType
 
 genTopLevel :: TopLevel -> Generator
-genTopLevel (TopDeclaration (Declaration _ name)) = do
-    globals %= (++ [name])
-    return []
+genTopLevel (TopDeclaration declaration@(Declaration _ name)) = do
+    mloc <- findGlobal name
+    case mloc of
+        Nothing -> do
+            globals %= (++ [variable declaration])
+            return []
+        _ -> error $ "global " ++ name ++ " redeclared"
 
 genTopLevel (TopFunction function) = genFunction function
 
@@ -82,7 +130,7 @@ genFunction function = do
                 ReturnStm _ -> False
                 _ -> True
 
-    locals .= funcArgs function
+    locals .= map (Variable ValueType) (funcArgs function)
     body <- genBody $ statements ++ statements'
     return $ decl : body ++ ret
 
@@ -115,20 +163,20 @@ genStatement (ReturnStm expression) = do
     return $ code ++ saveRet ++ popLocals ++ pushRet ++ ret
 
 genStatement (AssignmentStm (Assignment name expression)) = do
-    mpos <- findName name
+    mpos <- findName' name
     code <- genExpression expression
     locals %= init
     case mpos of
         Just pos ->
-            return $ code ++ ["PUSH " ++ show pos, "SWAP", "POKE"]
+            return $ code ++ ["PUSH " ++ show pos, "POKE"]
         Nothing -> do
-            locals %= (++ [name])
+            newLocal name
             return $ ("# assign " ++ name) : code
 
 genStatement (ExpressionStm expression) = do
     code <- genExpression expression
     locals %= init
-    return $ code ++ ["# pop expr stm", "POP"]
+    return $ code ++ ["POP"]
 
 genStatement (IfStm (If condition thenBody elseBody)) = do
     condCode <- genExpression condition
@@ -158,6 +206,13 @@ genStatement (WhileStm (While condition body)) = do
 
     return $ [topLabel] ++ condCode ++ check ++ bodyCode ++ end
 
+genStatement (ArrayAssignmentStm (ArrayAssignment aa expression)) = do
+    loc <- findName $ arrayName aa
+    exprCode <- genExpression expression
+    indexCode <- genExpression $ arrayIndex aa
+    let assignCode = ["ADD << " ++ show loc, "POKE"]
+    return $ exprCode ++ indexCode ++ assignCode
+
 genCall :: Identifier -> Int -> [Code]
 genCall name arity
     | name `elem` ops0 = [upperName, "PUSH 0"]
@@ -168,41 +223,57 @@ genCall name arity
 
 genExpression :: Expression -> Generator
 genExpression (ValueExp value) = do
-    locals %= (++ [value])
+    newLocal value
     return ["PUSH " ++ value]
 
 genExpression (FunctionCallExp (FunctionCall name argExps)) = do
     args <- concatMapM genExpression argExps
     locals %= (reverse . drop (length argExps) . reverse)
-    locals %= (++ [name ++ " retval"])
+    newLocal $ name ++ " retval"
     return $ ["# call " ++ name] ++ args ++ genCall name (length argExps)
 
 genExpression (IdentifierExp name) = do
     showLocals <- show <$> use locals
-    mpos <- findName name
-    case mpos of
-        Just pos -> do
-            locals %= (++ ["temp " ++ name])
-            return ["# " ++ showLocals, "PEEK << " ++ show pos]
-        Nothing -> error $ "identifier " ++ name ++ " not in scope"
+    pos <- findName name
+    newLocal $ "temp " ++ name
+    return ["# " ++ showLocals, "PEEK << " ++ show pos]
 
 genExpression (ConstantExp name) = do
-    locals %= (++ ["temp " ++ name])
+    newLocal $ "temp " ++ name
     return ["PUSH " ++ name]
+
+genExpression (ArrayAccessExp (ArrayAccess name indexExp)) = do
+    loc <- findName name
+    indexCode <- genExpression indexExp
+    newLocal $ "temp " ++ name ++ "[exp]"
+    return $ indexCode ++ ["ADD << " ++ show loc, "PEEK"]
+
+findVariable :: Identifier -> [Variable] -> Maybe Int
+findVariable _ [] = Nothing
+findVariable name (x@(Variable _ xname):xs)
+    | name == xname = Just 0
+    | otherwise = (+ variableSize x) <$> findVariable name xs
 
 findLocal :: Identifier -> State GenState (Maybe Int)
 findLocal name = do
     allLocals <- use locals
-    return $ flip (-) (length allLocals) <$> elemIndex name allLocals
+    return $ flip (-) (sum $ map variableSize allLocals) <$> findVariable name allLocals
 
 findGlobal :: Identifier -> State GenState (Maybe Int)
 findGlobal name = do
     allGlobals <- use globals
-    return $ elemIndex name allGlobals
+    return $ findVariable name allGlobals
 
-findName :: Identifier -> State GenState (Maybe Int)
-findName name = do
+findName' :: Identifier -> State GenState (Maybe Int)
+findName' name = do
     local <- findLocal name
     global <- findGlobal name
     let location = local `mplus` global
     return location
+
+findName :: Identifier -> State GenState Int
+findName name = do
+    mloc <- findName' name
+    case mloc of
+        Just loc -> return loc
+        Nothing -> error $ "identifier " ++ name ++ " not in scope"

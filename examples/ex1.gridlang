@@ -1,21 +1,20 @@
-
 CALL << @main
 END
 
 @factorial
 # call equal
-# ["n"]
+# [Variable ValueType "n"]
 PEEK << -1
 PUSH 0
 EQUAL
 IFFGOTO << @L0
 PUSH 1
 STORE retval
-# ret, pop locals ["n"]
+# ret, pop locals [Variable ValueType "n"]
 POPN << 1
 PUSH retval
 RETURN
-# scope exit, pop ["1"]
+# scope exit, pop [Variable ValueType "1"]
 POPN << 1
 GOTO << @L1
 @L0
@@ -25,40 +24,40 @@ POPN << 0
 # assign f
 # call factorial
 # call sub
-# ["n"]
+# [Variable ValueType "n"]
 PEEK << -1
 PUSH 1
 SUB
 CALL << @factorial
 # call mul
-# ["n","f"]
+# [Variable ValueType "n",Variable ValueType "f"]
 PEEK << -2
-# ["n","f","temp n"]
+# [Variable ValueType "n",Variable ValueType "f",Variable ValueType "temp n"]
 PEEK << -2
 MUL
 STORE retval
-# ret, pop locals ["n","f"]
+# ret, pop locals [Variable ValueType "n",Variable ValueType "f"]
 POPN << 2
 PUSH retval
 RETURN
-# scope exit, pop ["f","mul retval"]
+# scope exit, pop [Variable ValueType "f",Variable ValueType "mul retval"]
 POPN << 2
 # end @factorial
 
 @fib
 # call equal
-# ["n"]
+# [Variable ValueType "n"]
 PEEK << -1
 PUSH 0
 EQUAL
 IFFGOTO << @L2
 PUSH 0
 STORE retval
-# ret, pop locals ["n"]
+# ret, pop locals [Variable ValueType "n"]
 POPN << 1
 PUSH retval
 RETURN
-# scope exit, pop ["0"]
+# scope exit, pop [Variable ValueType "0"]
 POPN << 1
 GOTO << @L3
 @L2
@@ -66,18 +65,18 @@ GOTO << @L3
 POPN << 0
 @L3
 # call equal
-# ["n"]
+# [Variable ValueType "n"]
 PEEK << -1
 PUSH 1
 EQUAL
 IFFGOTO << @L4
 PUSH 1
 STORE retval
-# ret, pop locals ["n"]
+# ret, pop locals [Variable ValueType "n"]
 POPN << 1
 PUSH retval
 RETURN
-# scope exit, pop ["1"]
+# scope exit, pop [Variable ValueType "1"]
 POPN << 1
 GOTO << @L5
 @L4
@@ -87,25 +86,25 @@ POPN << 0
 # call add
 # call fib
 # call sub
-# ["n"]
+# [Variable ValueType "n"]
 PEEK << -1
 PUSH 1
 SUB
 CALL << @fib
 # call fib
 # call sub
-# ["n","fib retval"]
+# [Variable ValueType "n",Variable ValueType "fib retval"]
 PEEK << -2
 PUSH 2
 SUB
 CALL << @fib
 ADD
 STORE retval
-# ret, pop locals ["n"]
+# ret, pop locals [Variable ValueType "n"]
 POPN << 1
 PUSH retval
 RETURN
-# scope exit, pop ["add retval"]
+# scope exit, pop [Variable ValueType "add retval"]
 POPN << 1
 # end @fib
 
@@ -115,96 +114,87 @@ PUSH 0
 # assign b
 PUSH 1
 @L6
-# ["n","a","b"]
+# [Variable ValueType "n",Variable ValueType "a",Variable ValueType "b"]
 PEEK << -3
 IFFGOTO << @L7
 # assign c
-# ["n","a","b"]
+# [Variable ValueType "n",Variable ValueType "a",Variable ValueType "b"]
 PEEK << -2
-# ["n","a","b","c"]
+# [Variable ValueType "n",Variable ValueType "a",Variable ValueType "b",Variable ValueType "c"]
 PEEK << -2
 PUSH -3
-SWAP
 POKE
 # call add
-# ["n","a","b","c"]
+# [Variable ValueType "n",Variable ValueType "a",Variable ValueType "b",Variable ValueType "c"]
 PEEK << -2
-# ["n","a","b","c","temp b"]
+# [Variable ValueType "n",Variable ValueType "a",Variable ValueType "b",Variable ValueType "c",Variable ValueType "temp b"]
 PEEK << -2
 ADD
 PUSH -2
-SWAP
 POKE
 # call sub
-# ["n","a","b","c"]
+# [Variable ValueType "n",Variable ValueType "a",Variable ValueType "b",Variable ValueType "c"]
 PEEK << -4
 PUSH 1
 SUB
 PUSH -4
-SWAP
 POKE
-# scope exit, pop ["c"]
+# scope exit, pop [Variable ValueType "c"]
 POPN << 1
 GOTO << @L6
 PUSH @L6
 @L7
-# ["n","a","b"]
+# [Variable ValueType "n",Variable ValueType "a",Variable ValueType "b"]
 PEEK << -2
 STORE retval
-# ret, pop locals ["n","a","b"]
+# ret, pop locals [Variable ValueType "n",Variable ValueType "a",Variable ValueType "b"]
 POPN << 3
 PUSH retval
 RETURN
-# scope exit, pop ["a","b","temp a"]
+# scope exit, pop [Variable ValueType "a",Variable ValueType "b",Variable ValueType "temp a"]
 POPN << 3
 # end @fib2
 
 @assigntest
 # call print
-# ["a"]
+# [Variable ValueType "a"]
 PEEK << -1
 PRINT
 PUSH 0
-# pop expr stm
 POP
 PUSH 20
 PUSH -1
-SWAP
 POKE
 # call print
-# ["a"]
+# [Variable ValueType "a"]
 PEEK << -1
 PRINT
 PUSH 0
-# pop expr stm
 POP
 # assign k
 PUSH 30
 # call print
-# ["a","k"]
+# [Variable ValueType "a",Variable ValueType "k"]
 PEEK << -1
 PRINT
 PUSH 0
-# pop expr stm
 POP
 PUSH 40
 PUSH -1
-SWAP
 POKE
 # call print
-# ["a","k"]
+# [Variable ValueType "a",Variable ValueType "k"]
 PEEK << -1
 PRINT
 PUSH 0
-# pop expr stm
 POP
 PUSH 0
 STORE retval
-# ret, pop locals ["a","k"]
+# ret, pop locals [Variable ValueType "a",Variable ValueType "k"]
 POPN << 2
 PUSH retval
 RETURN
-# scope exit, pop ["k","0"]
+# scope exit, pop [Variable ValueType "k",Variable ValueType "0"]
 POPN << 2
 # end @assigntest
 
@@ -216,17 +206,15 @@ IFFGOTO << @L8
 # assign b
 PUSH 101
 # call print
-# ["a","b"]
+# [Variable ValueType "a",Variable ValueType "b"]
 PEEK << -1
 PRINT
 PUSH 0
-# pop expr stm
 POP
 PUSH 102
 PUSH -2
-SWAP
 POKE
-# scope exit, pop ["b"]
+# scope exit, pop [Variable ValueType "b"]
 POPN << 1
 GOTO << @L9
 @L8
@@ -234,19 +222,18 @@ GOTO << @L9
 POPN << 0
 @L9
 # call print
-# ["a"]
+# [Variable ValueType "a"]
 PEEK << -1
 PRINT
 PUSH 0
-# pop expr stm
 POP
 PUSH 0
 STORE retval
-# ret, pop locals ["a"]
+# ret, pop locals [Variable ValueType "a"]
 POPN << 1
 PUSH retval
 RETURN
-# scope exit, pop ["a","0"]
+# scope exit, pop [Variable ValueType "a",Variable ValueType "0"]
 POPN << 2
 # end @scope
 
@@ -260,32 +247,28 @@ PUSH 1.23
 # assign d
 PUSH -4.56
 # call print
-# ["a","b","c","d"]
+# [Variable ValueType "a",Variable ValueType "b",Variable ValueType "c",Variable ValueType "d"]
 PEEK << -4
 PRINT
 PUSH 0
-# pop expr stm
 POP
 # call print
-# ["a","b","c","d"]
+# [Variable ValueType "a",Variable ValueType "b",Variable ValueType "c",Variable ValueType "d"]
 PEEK << -3
 PRINT
 PUSH 0
-# pop expr stm
 POP
 # call print
-# ["a","b","c","d"]
+# [Variable ValueType "a",Variable ValueType "b",Variable ValueType "c",Variable ValueType "d"]
 PEEK << -2
 PRINT
 PUSH 0
-# pop expr stm
 POP
 # call print
-# ["a","b","c","d"]
+# [Variable ValueType "a",Variable ValueType "b",Variable ValueType "c",Variable ValueType "d"]
 PEEK << -1
 PRINT
 PUSH 0
-# pop expr stm
 POP
 # assign e
 # call add
@@ -316,18 +299,16 @@ MUL
 ADD
 ADD
 # call print
-# ["a","b","c","d","e","f"]
+# [Variable ValueType "a",Variable ValueType "b",Variable ValueType "c",Variable ValueType "d",Variable ValueType "e",Variable ValueType "f"]
 PEEK << -2
 PRINT
 PUSH 0
-# pop expr stm
 POP
 # call print
-# ["a","b","c","d","e","f"]
+# [Variable ValueType "a",Variable ValueType "b",Variable ValueType "c",Variable ValueType "d",Variable ValueType "e",Variable ValueType "f"]
 PEEK << -1
 PRINT
 PUSH 0
-# pop expr stm
 POP
 # call print
 # call mod
@@ -336,22 +317,20 @@ PUSH 3
 MOD
 PRINT
 PUSH 0
-# pop expr stm
 POP
 # assign i
 PUSH 1
 # call equal
-# ["a","b","c","d","e","f","i"]
+# [Variable ValueType "a",Variable ValueType "b",Variable ValueType "c",Variable ValueType "d",Variable ValueType "e",Variable ValueType "f",Variable ValueType "i"]
 PEEK << -1
 PUSH 1
 EQUAL
 IFFGOTO << @L10
 # call print
-# ["a","b","c","d","e","f","i"]
+# [Variable ValueType "a",Variable ValueType "b",Variable ValueType "c",Variable ValueType "d",Variable ValueType "e",Variable ValueType "f",Variable ValueType "i"]
 PEEK << -1
 PRINT
 PUSH 0
-# pop expr stm
 POP
 # scope exit, pop []
 POPN << 0
@@ -365,14 +344,13 @@ POPN << 0
 PUSH 10
 RAND
 # call print
-# ["a","b","c","d","e","f","i","x"]
+# [Variable ValueType "a",Variable ValueType "b",Variable ValueType "c",Variable ValueType "d",Variable ValueType "e",Variable ValueType "f",Variable ValueType "i",Variable ValueType "x"]
 PEEK << -1
 PRINT
 PUSH 0
-# pop expr stm
 POP
 # call greater
-# ["a","b","c","d","e","f","i","x"]
+# [Variable ValueType "a",Variable ValueType "b",Variable ValueType "c",Variable ValueType "d",Variable ValueType "e",Variable ValueType "f",Variable ValueType "i",Variable ValueType "x"]
 PEEK << -1
 PUSH 5
 GREATER
@@ -381,7 +359,6 @@ IFFGOTO << @L12
 PUSH 1
 PRINT
 PUSH 0
-# pop expr stm
 POP
 # scope exit, pop []
 POPN << 0
@@ -391,18 +368,17 @@ GOTO << @L13
 PUSH 0
 PRINT
 PUSH 0
-# pop expr stm
 POP
 # scope exit, pop []
 POPN << 0
 @L13
 PUSH 0
 STORE retval
-# ret, pop locals ["a","b","c","d","e","f","i","x"]
+# ret, pop locals [Variable ValueType "a",Variable ValueType "b",Variable ValueType "c",Variable ValueType "d",Variable ValueType "e",Variable ValueType "f",Variable ValueType "i",Variable ValueType "x"]
 POPN << 8
 PUSH retval
 RETURN
-# scope exit, pop ["a","b","c","d","e","f","i","x","0"]
+# scope exit, pop [Variable ValueType "a",Variable ValueType "b",Variable ValueType "c",Variable ValueType "d",Variable ValueType "e",Variable ValueType "f",Variable ValueType "i",Variable ValueType "x",Variable ValueType "0"]
 POPN << 9
 # end @nums
 
@@ -413,7 +389,6 @@ PUSH 4
 CALL << @factorial
 PRINT
 PUSH 0
-# pop expr stm
 POP
 # call print
 # call fib
@@ -421,7 +396,6 @@ PUSH 10
 CALL << @fib
 PRINT
 PUSH 0
-# pop expr stm
 POP
 # call print
 # call fib2
@@ -429,20 +403,16 @@ PUSH 10
 CALL << @fib2
 PRINT
 PUSH 0
-# pop expr stm
 POP
 # call assigntest
 PUSH 10
 CALL << @assigntest
-# pop expr stm
 POP
 # call scope
 CALL << @scope
-# pop expr stm
 POP
 # call nums
 CALL << @nums
-# pop expr stm
 POP
 PUSH 0
 STORE retval
@@ -450,7 +420,7 @@ STORE retval
 POPN << 0
 PUSH retval
 RETURN
-# scope exit, pop ["0"]
+# scope exit, pop [Variable ValueType "0"]
 POPN << 1
 # end @main
 

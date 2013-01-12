@@ -31,6 +31,7 @@ data Statement =
     ExpressionStm Expression
     | ReturnStm Expression
     | AssignmentStm Assignment
+    | ArrayAssignmentStm ArrayAssignment
     | IfStm If
     | WhileStm While
     deriving (Show)
@@ -52,6 +53,7 @@ data Expression =
     FunctionCallExp FunctionCall
     | ValueExp String
     | IdentifierExp String
+    | ArrayAccessExp ArrayAccess
     | ConstantExp String
     deriving (Show)
 
@@ -64,5 +66,17 @@ data FunctionCall = FunctionCall {
 data Assignment = Assignment {
     asgnVar :: Identifier,
     asgnExp :: Expression
+}
+    deriving (Show)
+
+data ArrayAccess = ArrayAccess {
+    arrayName :: Identifier,
+    arrayIndex :: Expression
+}
+    deriving (Show)
+
+data ArrayAssignment = ArrayAssignment {
+    aaArray :: ArrayAccess,
+    aaExp :: Expression
 }
     deriving (Show)
