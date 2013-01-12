@@ -59,7 +59,7 @@ parseGC input =
         -- operators
         eqP = opP addP eqP [("equal", "==")]
         addP = opP mulP addP [("add", "+"), ("sub", "-")]
-        mulP = opP primaryP mulP [("mul", "*"), ("div", "/")]
+        mulP = opP primaryP mulP [("mul", "*"), ("div", "/"), ("mod", "%")]
 
         opP next same ops =
                 try (opFunc <$> next <*> choice (map opsP ops) <* spaces <*> same)

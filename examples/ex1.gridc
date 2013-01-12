@@ -76,6 +76,8 @@ int nums()
     f = 1 + (2 * 3) + (4 * 5);
     print(e);
     print(f);
+
+    print(5 % 3);
 }
 
 int main()

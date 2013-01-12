@@ -32,7 +32,7 @@ ops0 :: [String]
 ops0 = words "print panic"
 
 ops1 :: [String]
-ops1 = words "plus add minus sub mul div min max greater less equal"
+ops1 = words "plus add minus sub mul div min max greater less equal mod"
 
 concatMapM :: (Monad m) => (a -> m [b]) -> [a] -> m [b]
 concatMapM f xs = liftM concat (mapM f xs)

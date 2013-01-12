@@ -328,6 +328,15 @@ PRINT
 PUSH 0
 # pop expr stm
 POP
+# call print
+# call mod
+PUSH 5
+PUSH 3
+MOD
+PRINT
+PUSH 0
+# pop expr stm
+POP
 PUSH 0
 STORE retval
 # ret, pop locals ["a","b","c","d","e","f"]
