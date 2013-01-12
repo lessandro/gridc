@@ -5,7 +5,7 @@ module GridC.Codegen (codegen) where
 import Control.Applicative ((<$>))
 import Control.Lens (makeLenses, (.=), (%=), (+=), use)
 import Control.Monad (liftM)
-import Control.Monad.State (State, evalState)
+import Control.Monad.State.Strict (State, evalState)
 import Data.Char (toUpper)
 import Data.List (elemIndex)
 
