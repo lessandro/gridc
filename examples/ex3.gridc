@@ -1,0 +1,16 @@
+int a;
+int[10] b;
+
+int g() {
+    a = 3;
+}
+
+int f(a) {
+    g();
+    a = 2;
+}
+
+int main() {
+    f(1);
+    print(a);
+}

@@ -21,7 +21,15 @@ parseGC input =
         Right program -> program
     where
         -- program
-        programP = Program <$> (spaces *> many functionP) <* eof
+        programP = Program <$> (spaces *> many topLevelP) <* eof
+
+        -- top level
+        topLevelP =
+            try (TopDeclaration <$> declarationP)
+            <|> (TopFunction <$> functionP)
+
+        -- declaration
+        declarationP = Declaration <$> dataTypeP <* spaces <*> identifierP <* char ';' <* spaces
 
         -- function
         functionP = Function <$> dataTypeP <* spaces <*> identifierP <*> funcArgsP <* spaces <*> funcBodyP
@@ -82,11 +90,19 @@ parseGC input =
         callArgsP = between (char '(') (char ')' <* spaces) exprListP
         exprListP = sepBy expressionP (char ',' <* spaces)
 
-        -- etc
+        -- types
         dataTypeP =
-                IntType <$ string "int"
-            <|> FloatType <$ string "float"
+                try (arrayC <$> (typeP *> char '[' *> many1 digit) <* char ']')
+            <|> ValueType <$ typeP
 
+        arrayC = ArrayType . atoi
+        atoi s = read s :: Int
+
+        typeP =
+                string "int"
+            <|> string "float"
+
+        -- etc
         identifierP = (++) <$> many1 letter <*> many alphaNum
 
         constantP = (:) <$> char '@' <*> many alphaNum

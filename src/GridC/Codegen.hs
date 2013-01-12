@@ -4,7 +4,7 @@ module GridC.Codegen (codegen) where
 
 import Control.Applicative ((<$>))
 import Control.Lens (makeLenses, (.=), (%=), (+=), use)
-import Control.Monad (liftM)
+import Control.Monad (liftM, mplus)
 import Control.Monad.State.Strict (State, evalState)
 import Data.Char (toUpper)
 import Data.List (elemIndex)
@@ -15,6 +15,7 @@ type Code = String
 
 data GenState = GenState {
     _locals :: [Identifier],
+    _globals :: [Identifier],
     _jump :: Int
 }
 
@@ -45,15 +46,28 @@ concatMapM f xs = liftM concat (mapM f xs)
 codegen :: Program -> String
 codegen program = unlines $ evalState (genProgram program) emptyState
     where
-        emptyState = GenState { _locals = [], _jump = 0 }
+        emptyState = GenState { _locals = [], _globals = [], _jump = 0 }
 
 genProgram :: Program -> Generator
-genProgram (Program functions) = do
+genProgram (Program topLevels) = do
     let
-        begin = ["CALL << @main", "END", ""]
+        begin = ["", "CALL << @main", "END", ""]
 
-    code <- concatMapM genFunction functions
-    return $ begin ++ code
+    code <- concatMapM genTopLevel topLevels
+    alloc <- allocGlobals
+    return $ alloc ++ begin ++ code
+
+allocGlobals :: Generator
+allocGlobals = do
+    allGlobals <- use globals
+    return $ replicate (length allGlobals) "PUSH 0"
+
+genTopLevel :: TopLevel -> Generator
+genTopLevel (TopDeclaration (Declaration _ name)) = do
+    globals %= (++ [name])
+    return []
+
+genTopLevel (TopFunction function) = genFunction function
 
 genFunction :: Function -> Generator
 genFunction function = do
@@ -101,7 +115,7 @@ genStatement (ReturnStm expression) = do
     return $ code ++ saveRet ++ popLocals ++ pushRet ++ ret
 
 genStatement (AssignmentStm (Assignment name expression)) = do
-    mpos <- findLocal name
+    mpos <- findName name
     code <- genExpression expression
     locals %= init
     case mpos of
@@ -165,7 +179,7 @@ genExpression (FunctionCallExp (FunctionCall name argExps)) = do
 
 genExpression (IdentifierExp name) = do
     showLocals <- show <$> use locals
-    mpos <- findLocal name
+    mpos <- findName name
     case mpos of
         Just pos -> do
             locals %= (++ ["temp " ++ name])
@@ -180,3 +194,15 @@ findLocal :: Identifier -> State GenState (Maybe Int)
 findLocal name = do
     allLocals <- use locals
     return $ flip (-) (length allLocals) <$> elemIndex name allLocals
+
+findGlobal :: Identifier -> State GenState (Maybe Int)
+findGlobal name = do
+    allGlobals <- use globals
+    return $ elemIndex name allGlobals
+
+findName :: Identifier -> State GenState (Maybe Int)
+findName name = do
+    local <- findLocal name
+    global <- findGlobal name
+    let location = local `mplus` global
+    return location

@@ -2,10 +2,21 @@ module GridC.AST where
 
 type Identifier = String
 
-data DataType = IntType | FloatType
+data DataType = ValueType | ArrayType Int
     deriving (Show)
 
-data Program = Program [Function]
+data Program = Program [TopLevel]
+    deriving (Show)
+
+data TopLevel =
+    TopDeclaration Declaration
+    | TopFunction Function
+    deriving (Show)
+
+data Declaration = Declaration {
+    declType :: DataType,
+    declName :: Identifier
+}
     deriving (Show)
 
 data Function = Function {
