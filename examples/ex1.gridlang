@@ -337,14 +337,36 @@ PRINT
 PUSH 0
 # pop expr stm
 POP
+# assign i
+PUSH 1
+# call equal
+# ["a","b","c","d","e","f","i"]
+PEEK << -1
+PUSH 1
+EQUAL
+IFFGOTO << @L10
+# call print
+# ["a","b","c","d","e","f","i"]
+PEEK << -1
+PRINT
+PUSH 0
+# pop expr stm
+POP
+# scope exit, pop []
+POPN << 0
+GOTO << @L11
+@L10
+# scope exit, pop []
+POPN << 0
+@L11
 PUSH 0
 STORE retval
-# ret, pop locals ["a","b","c","d","e","f"]
-POPN << 6
+# ret, pop locals ["a","b","c","d","e","f","i"]
+POPN << 7
 PUSH retval
 RETURN
-# scope exit, pop ["a","b","c","d","e","f","0"]
-POPN << 7
+# scope exit, pop ["a","b","c","d","e","f","i","0"]
+POPN << 8
 # end @nums
 
 @main

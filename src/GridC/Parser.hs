@@ -30,8 +30,8 @@ parseGC input =
 
         -- statement
         statementP =
-                IfStm <$> ifP
-            <|> WhileStm <$> whileP
+                try (IfStm <$> ifP)
+            <|> try (WhileStm <$> whileP)
             <|> statementSMP <* char ';' <* spaces
 
         statementSMP =

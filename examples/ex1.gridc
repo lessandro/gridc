@@ -78,6 +78,11 @@ int nums()
     print(f);
 
     print(5 % 3);
+
+    i = 1;
+    if (i == 1) {
+        print(i);
+    }
 }
 
 int main()
