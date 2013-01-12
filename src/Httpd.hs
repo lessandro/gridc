@@ -103,12 +103,14 @@ writeResponse h content = do
 doGet :: String -> IO String
 doGet _ = return ":)"
 
--- Save a new document
 doPost :: String -> IO String
-doPost contents = E.catch code handler
+doPost contents = E.catch (E.evaluate $ compile contents) handler
     where
-        code = E.evaluate $ unlines $ codegen $ parseGC contents
-        handler = return . show . (`asTypeOf` (undefined :: E.SomeException))
+        handler :: E.SomeException -> IO String
+        handler = return . show
+
+compile :: String -> String
+compile = codegen . parseGC
 
 -- Process the HTTP request
 processRequest :: String -> String -> String -> IO String
