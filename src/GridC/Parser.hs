@@ -99,8 +99,9 @@ parseGC input =
 showError :: String -> ParseError -> String
 showError src e = init $ unlines [show e, line0, line1, column]
     where
-        line0 = if 0 > lineNum - 2 then "" else lines src !! (lineNum - 2)
-        line1 = lines src !! (lineNum - 1)
-        lineNum = sourceLine $ errorPos e
+        line0 = if lineNum == 1 then "" else showLine (lineNum - 1)
+        line1 = showLine lineNum
+        lineNum = sourceLine (errorPos e)
+        showLine n = (lines src ++ [""]) !! (n - 1)
         column = replicate (colNum - 1) ' ' ++ "^"
-        colNum = sourceColumn $ errorPos e
+        colNum = sourceColumn (errorPos e)
