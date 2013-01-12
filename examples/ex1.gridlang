@@ -359,14 +359,50 @@ GOTO << @L11
 # scope exit, pop []
 POPN << 0
 @L11
+# assign x
+# call rand
+PUSH 10
+RAND
+# call print
+# ["a","b","c","d","e","f","i","x"]
+PEEK << -1
+PRINT
+PUSH 0
+# pop expr stm
+POP
+# call greater
+# ["a","b","c","d","e","f","i","x"]
+PEEK << -1
+PUSH 5
+GREATER
+IFFGOTO << @L12
+# call print
+PUSH 1
+PRINT
+PUSH 0
+# pop expr stm
+POP
+# scope exit, pop []
+POPN << 0
+GOTO << @L13
+@L12
+# call print
+PUSH 0
+PRINT
+PUSH 0
+# pop expr stm
+POP
+# scope exit, pop []
+POPN << 0
+@L13
 PUSH 0
 STORE retval
-# ret, pop locals ["a","b","c","d","e","f","i"]
-POPN << 7
+# ret, pop locals ["a","b","c","d","e","f","i","x"]
+POPN << 8
 PUSH retval
 RETURN
-# scope exit, pop ["a","b","c","d","e","f","i","0"]
-POPN << 8
+# scope exit, pop ["a","b","c","d","e","f","i","x","0"]
+POPN << 9
 # end @nums
 
 @main

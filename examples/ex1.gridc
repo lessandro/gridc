@@ -83,6 +83,14 @@ int nums()
     if (i == 1) {
         print(i);
     }
+
+    x = rand(10);
+    print(x);
+    if (x > 5) {
+        print(1);
+    } else {
+        print(0);
+    }
 }
 
 int main()

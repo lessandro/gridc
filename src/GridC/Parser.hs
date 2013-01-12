@@ -57,7 +57,7 @@ parseGC input =
         expressionP = eqP
 
         -- operators
-        eqP = opP addP eqP [("equal", "==")]
+        eqP = opP addP eqP [("equal", "=="), ("nequal", "!="), ("greater", ">"), ("less", "<")]
         addP = opP mulP addP [("add", "+"), ("sub", "-")]
         mulP = opP primaryP mulP [("mul", "*"), ("div", "/"), ("mod", "%")]
 

@@ -28,11 +28,16 @@ newLabel = do
 
 type Generator = State GenState [Code]
 
+-- opcodes that return 0 values
 ops0 :: [String]
 ops0 = words "print panic"
 
+-- opcodes that return 1 value
 ops1 :: [String]
-ops1 = words "plus add minus sub mul div min max greater less equal mod"
+ops1 = words $ a ++ b
+    where
+        a = "add sub mul div mod abs neg min max "
+        b = "greater less equal nequal rand"
 
 concatMapM :: (Monad m) => (a -> m [b]) -> [a] -> m [b]
 concatMapM f xs = liftM concat (mapM f xs)
