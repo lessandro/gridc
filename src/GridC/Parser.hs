@@ -103,7 +103,7 @@ parseGC input =
             <|> string "float"
 
         -- etc
-        identifierP = (++) <$> many1 letter <*> many alphaNum
+        identifierP = (++) <$> many1 letter <*> many (alphaNum <|> char '_')
 
         constantP = (:) <$> char '@' <*> many alphaNum
 
