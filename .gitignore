@@ -1,3 +1,6 @@
 dist
 /gridc
+*.hi
+*.o
+*.swp
 
