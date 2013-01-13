@@ -116,6 +116,7 @@ parseGC input =
         typeP =
                 string "int"
             <|> string "float"
+            <|> string "void"
 
         arrayC = ArrayType . atoi
         atoi s = read s :: Int
