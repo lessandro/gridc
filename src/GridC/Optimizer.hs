@@ -7,7 +7,7 @@ optimize code
     | optimized == code = code
     | otherwise = optimize optimized
     where
-        optimized = gotos $ peek $ popn1 $ popn0 code
+        optimized = pushes $ gotos $ peek $ popn1 $ popn0 code
 
 popn0 :: Optimizer
 popn0 = filter (/= "POPN << 0")
@@ -32,6 +32,16 @@ gotos (x:xs)
         continue = gotos xs
         isGoto = isOp "GOTO" x
         uselessGoto = comesNext (last $ words x) xs
+
+pushes :: Optimizer
+pushes (x:y:xs)
+    | isPush && isPop = pushes xs
+    | otherwise = x : pushes (y:xs)
+    where
+        isPush = isOp "PUSH" x
+        isPop = isOp "POP" y
+
+pushes xs = xs
 
 isOp :: String -> String -> Bool
 isOp _ [] = False
