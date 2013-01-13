@@ -123,7 +123,7 @@ parseGC input =
         -- etc
         identifierP = (++) <$> many1 letter <*> many (alphaNum <|> char '_')
 
-        constantP = (:) <$> char '@' <*> many alphaNum
+        constantP = (:) <$> char '@' <*> many (alphaNum <|> char '_')
 
         valueP = option "" (string "-") `cc` many1 digit `cc` fractionP
         fractionP = option "" $ string "." `cc` many1 digit
