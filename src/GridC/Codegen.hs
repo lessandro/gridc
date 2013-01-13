@@ -134,10 +134,9 @@ genBody statements = do
 
     let
         diff = drop (length oldLocals) newLocals
-        comment = ["# scope exit, pop " ++ show diff | not $ null popLocals]
         popLocals = ["POPN << " ++ show (length diff)]
 
-    return $ code ++ comment ++ popLocals
+    return $ code ++ popLocals
 
 genStatement :: Statement -> Generator
 genStatement (ReturnStm expression) = do
@@ -145,13 +144,13 @@ genStatement (ReturnStm expression) = do
     code <- genExpression expression
 
     let
+        comment = ["# return"]
         saveRet = ["STORE retval"]
-        comment = "# ret, pop locals " ++ show allLocals
-        popLocals = [comment, "POPN << " ++ show (length allLocals)]
+        popLocals = ["POPN << " ++ show (length allLocals)]
         pushRet = ["PUSH retval"]
         ret = ["RETURN"]
 
-    return $ code ++ saveRet ++ popLocals ++ pushRet ++ ret
+    return $ comment ++ code ++ saveRet ++ popLocals ++ pushRet ++ ret
 
 genStatement (AssignmentStm (Assignment name expression)) = do
     mpos <- findName' name
@@ -224,10 +223,9 @@ genExpression (FunctionCallExp (FunctionCall name argExps)) = do
     return $ ["# call " ++ name] ++ args ++ genCall name (length argExps)
 
 genExpression (IdentifierExp name) = do
-    showLocals <- show <$> use locals
     pos <- findName name
     newLocal $ "temp " ++ name
-    return ["# " ++ showLocals, "PEEK << " ++ show pos]
+    return ["PEEK << " ++ show pos]
 
 genExpression (ConstantExp name) = do
     newLocal $ "temp " ++ name
