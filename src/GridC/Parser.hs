@@ -52,11 +52,11 @@ parseGC input =
         statementP =
                 try (IfStm <$> ifP)
             <|> try (WhileStm <$> whileP)
+            <|> try (ReturnStm <$> returnP)
             <|> statementSMP <* char ';' <* spaces
 
         statementSMP =
-                try (ReturnStm <$> returnP)
-            <|> try (ArrayAssignmentStm <$> arrayAssignmentP)
+                try (ArrayAssignmentStm <$> arrayAssignmentP)
             <|> try (AssignmentStm <$> assignmentP)
             <|> ExpressionStm <$> expressionP
 
@@ -69,7 +69,9 @@ parseGC input =
         whileP = While <$> (string "while" *> spaces *> condP) <*> funcBodyP
 
         -- return
-        returnP = string "return" *> spaces *> expressionP
+        returnP =
+                try ((string "return" *> spaces *> expressionP) <* char ';' <* spaces)
+            <|> ValueExp "0" <$ string "return;" <* spaces
 
         -- assignment
         assignmentP = Assignment <$> identifierP <* spaces <* char '=' <* spaces <*> expressionP
