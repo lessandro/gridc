@@ -84,16 +84,7 @@ allocGlobals = do
     let n = sum $ map variableSize allGlobals
     case n of
         0 -> return []
-        _ -> return [
-            "PUSH " ++ show n,
-            "@globals",
-            "PUSH 0",
-            "SWAP",
-            "SUB << 1",
-            "DUP",
-            "IFTGOTO << @globals",
-            "POP",
-            ""]
+        _ -> return ["PUSH 0", "DUPN << " ++ show n, ""]
 
 typeSize :: DataType -> Int
 typeSize ValueType = 1
