@@ -24,5 +24,9 @@ int main() {
     f(1);
     print(a);
 
-    arr_test();
+    n = 10;
+    while (n > 0) {
+        arr_test();
+        n = n - 1;
+    }
 }

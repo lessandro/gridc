@@ -202,6 +202,7 @@ genStatement (ArrayAssignmentStm (ArrayAssignment aa expression)) = do
     loc <- findName $ arrayName aa
     exprCode <- genExpression expression
     indexCode <- genExpression $ arrayIndex aa
+    locals %= init . init
     let assignCode = ["ADD << " ++ show loc, "POKE"]
     return $ exprCode ++ indexCode ++ assignCode
 
@@ -236,6 +237,7 @@ genExpression (ConstantExp name) = do
 genExpression (ArrayAccessExp (ArrayAccess name indexExp)) = do
     loc <- findName name
     indexCode <- genExpression indexExp
+    locals %= init
     newLocal $ "temp " ++ name ++ "[exp]"
     return $ indexCode ++ ["ADD << " ++ show loc, "PEEK"]
 
