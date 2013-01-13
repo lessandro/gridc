@@ -7,7 +7,7 @@ optimize code
     | optimized == code = code
     | otherwise = optimize optimized
     where
-        optimized = pushes $ gotos $ peek $ popn1 $ popn0 code
+        optimized = retval $ pushes $ gotos $ peek $ popn1 $ popn0 code
 
 popn0 :: Optimizer
 popn0 = filter (/= "POPN << 0")
@@ -42,6 +42,17 @@ pushes (x:y:xs)
         isPop = isOp "POP" y
 
 pushes xs = xs
+
+retval :: Optimizer
+retval (x:y:xs)
+    | isReturn = mid ++ [x] ++ retval rest
+    | otherwise = x : retval (y:xs)
+    where
+        isReturn = isOp "PUSH" x && y == "STORE retval"
+        mid = takeWhile (/= "PUSH retval") xs
+        rest = tail $ dropWhile (/= "PUSH retval") xs
+
+retval xs = xs
 
 isOp :: String -> String -> Bool
 isOp _ [] = False
