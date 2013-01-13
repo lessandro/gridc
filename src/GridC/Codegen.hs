@@ -9,6 +9,7 @@ import Control.Monad.State.Strict (State, evalState)
 import Data.Char (toUpper)
 
 import GridC.AST
+import GridC.Optimizer
 
 type Code = String
 
@@ -61,8 +62,9 @@ concatMapM :: (Monad m) => (a -> m [b]) -> [a] -> m [b]
 concatMapM f xs = liftM concat (mapM f xs)
 
 codegen :: Program -> String
-codegen program = unlines $ evalState (genProgram program) emptyState
+codegen program = unlines $ optimize compiled
     where
+        compiled = evalState (genProgram program) emptyState
         emptyState = GenState {
             _locals = [],
             _globals = [],
