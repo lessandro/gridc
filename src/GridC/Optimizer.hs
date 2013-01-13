@@ -7,7 +7,7 @@ optimize code
     | optimized == code = code
     | otherwise = optimize optimized
     where
-        optimized = peek $ popn1 $ popn0 code
+        optimized = gotos $ peek $ popn1 $ popn0 code
 
 popn0 :: Optimizer
 popn0 = filter (/= "POPN << 0")
@@ -22,3 +22,30 @@ replace :: String -> String -> String -> String
 replace match replacement s
     | s == match = replacement
     | otherwise = s
+
+gotos :: Optimizer
+gotos [] = []
+gotos (x:xs)
+    | isGoto && uselessGoto = continue
+    | otherwise = x : continue
+    where
+        continue = gotos xs
+        isGoto = isOp "GOTO" x
+        uselessGoto = comesNext (last $ words x) xs
+
+isOp :: String -> String -> Bool
+isOp _ [] = False
+isOp op x = head (words x) == op
+
+comesNext :: String -> [String] -> Bool
+comesNext _ [] = False
+comesNext target (x:xs)
+    | x == target = True
+    | isNop x = comesNext target xs
+    | otherwise = False
+
+isNop :: String -> Bool
+isNop [] = True
+isNop ('#':_) = True
+isNop ('@':_) = True
+isNop _ = False
