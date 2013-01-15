@@ -1,0 +1,19 @@
+void f() {
+    for (i=0;i<10;i=i+1) {
+        print(i);
+    }
+}
+
+void g() {
+    i = 10;
+    for (;;) {
+        i = i - 1;
+        print(i);
+        if (i == 0) return;
+    }
+}
+
+void main() {
+    f();
+    g();
+}

@@ -52,6 +52,7 @@ parseGC input =
         statementP =
                 try (IfStm <$> ifP)
             <|> try (WhileStm <$> whileP)
+            <|> try forP
             <|> try (ReturnStm <$> returnP)
             <|> try (BlockStm <$> funcBodyP)
             <|> statementSMP <* char ';' <* spaces
@@ -68,6 +69,16 @@ parseGC input =
 
         -- while
         whileP = While <$> (string "while" *> spaces *> condP) <*> statementP
+
+        -- for
+        forP = do
+            _ <- string "for" <* spaces <* char '(' <* spaces
+            first <- option (BlockStm []) statementSMP <* char ';' <* spaces
+            cond <- option (ValueExp "1") expressionP <* char ';' <* spaces
+            incr <- option (BlockStm []) statementSMP <* char ')' <* spaces
+            body <- statementP
+            let while = While cond (BlockStm [body, incr])
+            return $ BlockStm [first, WhileStm while]
 
         -- return
         returnP =

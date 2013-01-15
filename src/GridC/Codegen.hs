@@ -144,6 +144,7 @@ genStatement :: Statement -> Generator
 genStatement (ReturnStm expression) = do
     allLocals <- use locals
     code <- genExpression expression
+    locals %= init
 
     let
         comment = ["# return"]
