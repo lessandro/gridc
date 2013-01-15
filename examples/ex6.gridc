@@ -15,43 +15,43 @@ int nearby[4];
 // look
 int
 look_north() {
-    //return ffi(@look, @north);
+    return ffi(@look, @north);
 }
 
 int
 look_east() {
-    //return ffi(@look, @east);
+    return ffi(@look, @east);
 }
 
 int
 look_south() {
-    //return ffi(@look, @south);
+    return ffi(@look, @south);
 }
 
 int
 look_west() {
-    //return ffi(@look, @west);
+    return ffi(@look, @west);
 }
 
 // pull
 int
 pull_north() {
-    //ffi(@pull, @north);
+    ffi(@pull, @north);
 }
 
 int
 pull_east() {
-    //ffi(@pull, @east);
+    ffi(@pull, @east);
 }
 
 int
 pull_south() {
-    //ffi(@pull, @south);
+    ffi(@pull, @south);
 }
 
 int
 pull_west() {
-    //ffi(@pull, @west);
+    ffi(@pull, @west);
 }
 
 int
@@ -73,43 +73,43 @@ pull_direction(d) {
 // push
 int
 push_north() {
-    //ffi(@push, @north);
+    ffi(@push, @north);
 }
 
 int
 push_east() {
-    //ffi(@push, @east);
+    ffi(@push, @east);
 }
 
 int
 push_south() {
-    //ffi(@push, @south);
+    ffi(@push, @south);
 }
 
 int
 push_west() {
-    //ffi(@push, @west);
+    ffi(@push, @west);
 }
 
 // move
 int
 move_north() {
-    //ffi(@move, @north);
+    ffi(@move, @north);
 }
 
 int
 move_east() {
-    //ffi(@move, @east);
+    ffi(@move, @east);
 }
 
 int
 move_south() {
-    //ffi(@move, @south);
+    ffi(@move, @south);
 }
 
 int
 move_west() {
-    //ffi(@move, @west);
+    ffi(@move, @west);
 }
 
 int move_direction(d) {
@@ -149,6 +149,7 @@ int pull_resources() {
             pull_direction(n);
             return 1;
         }
+        n = n + 1;
     }
     return 0;
 }
