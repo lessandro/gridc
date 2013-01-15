@@ -173,9 +173,9 @@ genStatement (ExpressionStm expression) = do
 genStatement (IfStm (If condition thenBody elseBody)) = do
     condCode <- genExpression condition
     locals %= init
-    thenCode <- genBody thenBody
+    thenCode <- genStatement thenBody
     elseLabel <- newLabel
-    elseCode <- genBody elseBody
+    elseCode <- genStatement elseBody
     endLabel <- newLabel
 
     let
@@ -189,7 +189,7 @@ genStatement (WhileStm (While condition body)) = do
     topLabel <- newLabel
     condCode <- genExpression condition
     locals %= init
-    bodyCode <- genBody body
+    bodyCode <- genStatement body
     endLabel <- newLabel
 
     let
@@ -205,6 +205,8 @@ genStatement (ArrayAssignmentStm (ArrayAssignment aa expression)) = do
     locals %= init . init
     let assignCode = ["ADD << " ++ show loc, "POKE"]
     return $ exprCode ++ indexCode ++ assignCode
+
+genStatement (BlockStm statements) = genBody statements
 
 genCall :: Identifier -> Int -> [Code]
 genCall name arity

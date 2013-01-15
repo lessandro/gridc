@@ -34,18 +34,19 @@ data Statement =
     | ArrayAssignmentStm ArrayAssignment
     | IfStm If
     | WhileStm While
+    | BlockStm [Statement]
     deriving (Show)
 
 data If = If {
     ifCond :: Expression,
-    ifThen :: [Statement],
-    ifElse :: [Statement]
+    ifThen :: Statement,
+    ifElse :: Statement
 }
     deriving (Show)
 
 data While = While {
     whileCond :: Expression,
-    whileBody :: [Statement]
+    whileBody :: Statement
 }
     deriving (Show)
 
