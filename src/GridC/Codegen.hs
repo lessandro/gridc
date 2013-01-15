@@ -62,7 +62,7 @@ concatMapM :: (Monad m) => (a -> m [b]) -> [a] -> m [b]
 concatMapM f xs = liftM concat (mapM f xs)
 
 codegen :: Program -> String
-codegen program = unlines $ optimize compiled
+codegen program = unlines (optimize compiled)
     where
         compiled = evalState (genProgram program) emptyState
         emptyState = GenState {
@@ -196,7 +196,7 @@ genStatement (WhileStm (While condition body)) = do
         check = ["IFFGOTO << " ++ endLabel]
         end = ["GOTO << " ++ topLabel, "PUSH " ++ topLabel, endLabel]
 
-    return $ [topLabel] ++ condCode ++ check ++ bodyCode ++ end
+    return $ topLabel : condCode ++ check ++ bodyCode ++ end
 
 genStatement (ArrayAssignmentStm (ArrayAssignment aa expression)) = do
     loc <- findName $ arrayName aa
