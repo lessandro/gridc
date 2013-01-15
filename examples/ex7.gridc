@@ -1,0 +1,25 @@
+void f(n) {
+    if (n == 1) print(10);
+    else if (n == 2) print(20);
+        else print(30);
+}
+
+void g(n, m) {
+    if (n == 1)
+        if (m == 1) print(10);
+        else print(20);
+}
+
+void main() {
+    f(1);
+    f(2);
+    f(3);
+    
+    print(0);
+
+    g(1, 1);
+    g(1, 2);
+    g(2, 1);
+
+    return;
+}

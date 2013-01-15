@@ -1,0 +1,233 @@
+// GridC to GridLang compiler
+// https://github.com/lessandro/gridc
+
+void cell_resource() { }
+void cell_empty() { }
+void cell_robot() { }
+
+int NORTH;
+int EAST;
+int SOUTH;
+int WEST;
+
+int nearby[4];
+
+// look
+int
+look_north() {
+    //return ffi(@look, @north);
+}
+
+int
+look_east() {
+    //return ffi(@look, @east);
+}
+
+int
+look_south() {
+    //return ffi(@look, @south);
+}
+
+int
+look_west() {
+    //return ffi(@look, @west);
+}
+
+// pull
+int
+pull_north() {
+    //ffi(@pull, @north);
+}
+
+int
+pull_east() {
+    //ffi(@pull, @east);
+}
+
+int
+pull_south() {
+    //ffi(@pull, @south);
+}
+
+int
+pull_west() {
+    //ffi(@pull, @west);
+}
+
+int
+pull_direction(d) {
+    if (d == NORTH) {
+        return pull_north();
+    }
+    if (d == EAST) {
+        return pull_east();
+    }
+    if (d == SOUTH) {
+        return pull_south();
+    }
+    if (d == WEST) {
+        return pull_west();
+    }
+}
+
+// push
+int
+push_north() {
+    //ffi(@push, @north);
+}
+
+int
+push_east() {
+    //ffi(@push, @east);
+}
+
+int
+push_south() {
+    //ffi(@push, @south);
+}
+
+int
+push_west() {
+    //ffi(@push, @west);
+}
+
+// move
+int
+move_north() {
+    //ffi(@move, @north);
+}
+
+int
+move_east() {
+    //ffi(@move, @east);
+}
+
+int
+move_south() {
+    //ffi(@move, @south);
+}
+
+int
+move_west() {
+    //ffi(@move, @west);
+}
+
+int move_direction(d) {
+    if (d == NORTH) {
+        return move_north();
+    }
+    if (d == EAST) {
+        return move_east();
+    }
+    if (d == SOUTH) {
+        return move_south();
+    }
+    if (d == WEST) {
+        return move_west();
+    }
+}
+
+int survey() {
+    nearby[NORTH] = look_north();
+    nearby[EAST] = look_east();
+    nearby[SOUTH] = look_south();
+    nearby[WEST] = look_west();
+}
+
+int clear() {
+    n = 0;
+    while (n < WEST + 1) {
+        nearby[n] = -1;
+        n = n + 1;
+    }
+}
+
+int pull_resources() {
+    n = 0;
+    while (n < WEST + 1) {
+        if (nearby[n] == @cell_resource) {
+            pull_direction(n);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int
+push_bots() {
+    if (nearby[WEST] == @cell_robot) {
+        if (nearby[EAST] == @cell_empty) {
+            move_east();
+        } else {
+            push_west();
+        }
+        return 1;
+    }
+    
+    if (nearby[EAST] == @cell_robot) {
+        if (nearby[WEST] == @cell_empty) {
+            move_west();
+        } else {
+            push_east();
+        }
+        return 1;
+    }
+    
+    if (nearby[NORTH] == @cell_robot) {
+        if (nearby[SOUTH] == @cell_empty) {
+            move_south();
+        } else {
+            push_north();
+        }
+        return 1;
+    }
+    
+    if (nearby[SOUTH] == @cell_robot) {
+        if (nearby[NORTH] == @cell_empty) {
+            move_north();
+        } else {
+            push_south();
+        }
+        return 1;
+    }
+    
+    return 0;
+}
+
+int
+move_clear() {
+    n = 0;
+    while (n < WEST + 1) {
+        if (nearby[n] == @cell_empty) {
+            move_direction(n);
+            return 1;
+        }
+        n = n + 1;
+    }
+    return 0;
+}
+
+int main() {
+    NORTH = 0;
+    EAST = 1;
+    SOUTH = 2;
+    WEST = 3;
+
+    while (1) {
+        clear();
+        survey();
+        if (pull_resources()) {
+            panic();
+            // do nada
+        } else {
+            panic();
+            if (move_clear()) {
+                // do nado
+            } else {
+                push_bots();
+            }
+        }
+    }
+
+    return 0;
+}

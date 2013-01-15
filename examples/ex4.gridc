@@ -1,0 +1,55 @@
+int eat(dir) {
+    if (ffi(@LOOK, dir) == @CELL_RESOURCE) {
+        ffi(@PULL, dir);
+    }
+}
+
+int eat_all() {
+    eat(@NORTH);
+    eat(@SOUTH);
+    eat(@WEST);
+    eat(@EAST);
+}
+
+int move_randomly() {
+    n = rand(3);
+    dir = @NORTH;
+    if (n == 0) { dir = @SOUTH; }
+    if (n == 1) { dir = @WEST; }
+    if (n == 2) { dir = @EAST; }
+    ffi(@MOVE, dir);
+}
+
+int seek(dx, dy, dir) {
+    if (ffi(@SCAN, dx, dy) == @CELL_RESOURCE) {
+        ffi(@MOVE, dir);
+        return 1;
+    }
+    return 0;
+}
+
+int move_bot() {
+    if (rand(6) == 0) {
+        move_randomly();
+        return 0;
+    }
+    
+    if (seek(2, 0, @EAST)) { return 0; }
+    if (seek(-2, 0, @WEST)) { return 0; }
+    if (seek(0, -2, @NORTH)) { return 0; }
+    if (seek(0, 2, @SOUTH)) { return 0; }
+
+    if (seek(1, 1, @EAST)) { return 0; }
+    if (seek(-1, 1, @WEST)) { return 0; }
+    if (seek(1, -1, @NORTH)) { return 0; }
+    if (seek(1, 1, @SOUTH)) { return 0; }
+    
+    move_randomly();
+}
+
+int main() {
+    while (1) {
+        eat_all();
+        move_bot();
+    }
+}
