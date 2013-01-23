@@ -4,12 +4,13 @@ module GridC.Codegen (codegen) where
 
 import Control.Applicative ((<$>))
 import Control.Lens ((.=), (%=), (+=), use)
-import Control.Monad (liftM, mplus)
+import Control.Monad (mplus)
 import Control.Monad.State.Strict (State, evalState)
 import Data.Char (toUpper)
 
 import GridC.AST
 import GridC.Optimizer
+import GridC.Util
 
 type Code = String
 
@@ -57,9 +58,6 @@ ops1 = words $ a ++ b
     where
         a = "add sub mul div mod abs neg min max "
         b = "greater less equal nequal rand"
-
-concatMapM :: (Monad m) => (a -> m [b]) -> [a] -> m [b]
-concatMapM f xs = liftM concat (mapM f xs)
 
 codegen :: Program -> String
 codegen program = unlines (optimize compiled)
