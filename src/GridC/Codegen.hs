@@ -90,15 +90,19 @@ typeSize :: DataType -> Int
 typeSize ValueType = 1
 typeSize (ArrayType n) = n
 
-variable :: Declaration -> Variable
+--variable :: Declaration -> Variable
+variable :: TopLevel -> Variable
 variable (Declaration dataType name) =
+    Variable dataType name
+
+variable (Function dataType name _ _) =
     Variable dataType name
 
 variableSize :: Variable -> Int
 variableSize (Variable dataType _) = typeSize dataType
 
 genTopLevel :: TopLevel -> Generator
-genTopLevel (TopDeclaration declaration@(Declaration _ name)) = do
+genTopLevel declaration@(Declaration _ name) = do
     mloc <- findGlobal name
     case mloc of
         Nothing -> do
@@ -106,22 +110,18 @@ genTopLevel (TopDeclaration declaration@(Declaration _ name)) = do
             return []
         _ -> error $ "global " ++ name ++ " redeclared"
 
-genTopLevel (TopFunction function) = genFunction function
-
-genFunction :: Function -> Generator
-genFunction function = do
+genTopLevel (Function _ name args statements) = do
     let
-        decl = '@' : funcName function
+        decl = '@' : name
         ret = ["# end " ++ decl, ""]
-        statements = funcBody function
-        statements' = [ReturnStm (ValueExp "0") | noReturn]
+        statements' = [Return (Value "0") | noReturn]
         noReturn
             | null statements = True
-            | otherwise = case last (funcBody function) of
-                ReturnStm _ -> False
+            | otherwise = case last statements of
+                Return _ -> False
                 _ -> True
 
-    locals .= map (Variable ValueType) (funcArgs function)
+    locals .= map (Variable ValueType) args
     body <- genBody $ statements ++ statements'
     return $ decl : body ++ ret
 
@@ -139,7 +139,7 @@ genBody statements = do
     return $ code ++ popLocals
 
 genStatement :: Statement -> Generator
-genStatement (ReturnStm expression) = do
+genStatement (Return expression) = do
     allLocals <- use locals
     code <- genExpression expression
     locals %= init
@@ -153,7 +153,7 @@ genStatement (ReturnStm expression) = do
 
     return $ comment ++ code ++ saveRet ++ popLocals ++ pushRet ++ ret
 
-genStatement (AssignmentStm (Assignment name expression)) = do
+genStatement (Assignment name expression) = do
     mpos <- findName' name
     code <- genExpression expression
     locals %= init
@@ -169,7 +169,7 @@ genStatement (ExpressionStm expression) = do
     locals %= init
     return $ code ++ ["POP"]
 
-genStatement (IfStm (If condition thenBody elseBody)) = do
+genStatement (If condition thenBody elseBody) = do
     condCode <- genExpression condition
     locals %= init
     thenCode <- genStatement thenBody
@@ -184,7 +184,7 @@ genStatement (IfStm (If condition thenBody elseBody)) = do
 
     return $ condCode ++ check ++ thenCode ++ middle ++ elseCode ++ end
 
-genStatement (WhileStm (While condition body)) = do
+genStatement (While condition body) = do
     topLabel <- newLabel
     condCode <- genExpression condition
     locals %= init
@@ -197,15 +197,15 @@ genStatement (WhileStm (While condition body)) = do
 
     return $ topLabel : condCode ++ check ++ bodyCode ++ end
 
-genStatement (ArrayAssignmentStm (ArrayAssignment aa expression)) = do
-    loc <- findName $ arrayName aa
+genStatement (ArrayAssignment name index expression) = do
+    loc <- findName name
     exprCode <- genExpression expression
-    indexCode <- genExpression $ arrayIndex aa
+    indexCode <- genExpression index
     locals %= init . init
     let assignCode = ["ADD << " ++ show loc, "POKE"]
     return $ exprCode ++ indexCode ++ assignCode
 
-genStatement (BlockStm statements) = genBody statements
+genStatement (Block statements) = genBody statements
 
 genCall :: Identifier -> Int -> [Code]
 genCall name arity
@@ -216,28 +216,28 @@ genCall name arity
     where upperName = map toUpper name
 
 genExpression :: Expression -> Generator
-genExpression (ValueExp value) = do
+genExpression (Value value) = do
     newLocal value
     return ["PUSH " ++ value]
 
-genExpression (FunctionCallExp (FunctionCall name argExps)) = do
+genExpression (FunctionCall name argExps) = do
     args <- concatMapM genExpression argExps
     locals %= (reverse . drop (length argExps) . reverse)
     newLocal $ name ++ " retval"
     return $ ["# call " ++ name] ++ args ++ genCall name (length argExps)
 
-genExpression (IdentifierExp name) = do
+genExpression (Identifier name) = do
     pos <- findName name
     newLocal $ "temp " ++ name
     return ["PEEK << " ++ show pos]
 
-genExpression (ConstantExp name) = do
+genExpression (Constant name) = do
     newLocal $ "temp " ++ name
     return ["PUSH " ++ name]
 
-genExpression (ArrayAccessExp (ArrayAccess name indexExp)) = do
+genExpression (ArrayAccess name index) = do
     loc <- findName name
-    indexCode <- genExpression indexExp
+    indexCode <- genExpression index
     locals %= init
     newLocal $ "temp " ++ name ++ "[exp]"
     return $ indexCode ++ ["ADD << " ++ show loc, "PEEK"]

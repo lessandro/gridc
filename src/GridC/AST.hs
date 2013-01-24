@@ -11,77 +11,26 @@ data Program = Program [TopLevel]
     deriving (Show)
 
 data TopLevel =
-    TopDeclaration Declaration
-    | TopFunction Function
-    deriving (Show)
-
-data Declaration = Declaration {
-    declType :: DataType,
-    declName :: Identifier
-}
-    deriving (Show)
-
-data Function = Function {
-    funcType :: DataType,
-    funcName :: Identifier,
-    funcArgs :: [Identifier],
-    funcBody :: [Statement]
-}
+    Declaration DataType Identifier
+    | Function DataType Identifier [Identifier] [Statement]
     deriving (Show)
 
 data Statement =
     ExpressionStm Expression
-    | ReturnStm Expression
-    | AssignmentStm Assignment
-    | ArrayAssignmentStm ArrayAssignment
-    | IfStm If
-    | WhileStm While
-    | BlockStm [Statement]
-    deriving (Show)
-
-data If = If {
-    ifCond :: Expression,
-    ifThen :: Statement,
-    ifElse :: Statement
-}
-    deriving (Show)
-
-data While = While {
-    whileCond :: Expression,
-    whileBody :: Statement
-}
+    | Return Expression
+    | Assignment Identifier Expression
+    | ArrayAssignment Identifier Expression Expression
+    | If Expression Statement Statement
+    | While Expression Statement
+    | Block [Statement]
     deriving (Show)
 
 data Expression =
-    FunctionCallExp FunctionCall
-    | ValueExp String
-    | IdentifierExp String
-    | ArrayAccessExp ArrayAccess
-    | ConstantExp String
-    deriving (Show)
-
-data FunctionCall = FunctionCall {
-    callName :: Identifier,
-    callArgs :: [Expression]
-}
-    deriving (Show)
-
-data Assignment = Assignment {
-    asgnVar :: Identifier,
-    asgnExp :: Expression
-}
-    deriving (Show)
-
-data ArrayAccess = ArrayAccess {
-    arrayName :: Identifier,
-    arrayIndex :: Expression
-}
-    deriving (Show)
-
-data ArrayAssignment = ArrayAssignment {
-    aaArray :: ArrayAccess,
-    aaExp :: Expression
-}
+    FunctionCall Identifier [Expression]
+    | Value String
+    | Identifier String
+    | ArrayAccess Identifier Expression
+    | Constant String
     deriving (Show)
 
 showAST :: Show a => a -> String

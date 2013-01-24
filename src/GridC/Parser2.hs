@@ -10,9 +10,7 @@ import GridC.Util
 parseGC :: String -> String -> Either String Program
 parseGC name input = eitherMap show id $ parse programP name input
     where
-        programP = Program <$> many topLevelP
-
-        topLevelP = TopFunction <$> functionP
+        programP = Program <$> many functionP
 
         functionP = Function <$> valueTypeP <*> identifier <*> funcArgsP <*> funcBodyP
         funcArgsP = parens (commaSep identifier)
@@ -23,8 +21,8 @@ parseGC name input = eitherMap show id $ parse programP name input
         statementP = ExpressionStm <$> expressionP <* semi
 
         expressionP =
-            try (FunctionCallExp <$> functionCallP)
-            <|> IdentifierExp <$> identifier
-            <|> ValueExp . show <$> integer
+            try functionCallP
+            <|> Identifier <$> identifier
+            <|> Value . show <$> integer
 
         functionCallP = FunctionCall <$> identifier <*> parens (commaSep expressionP)
