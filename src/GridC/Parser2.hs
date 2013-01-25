@@ -1,7 +1,8 @@
 module GridC.Parser2 where
 
 import Control.Applicative ((<$>), (<$), (<*>), (<*))
-import Text.Parsec (parse, try, many, (<|>))
+import Text.Parsec (parse, many, (<|>))
+import Text.Parsec.Expr (buildExpressionParser, Operator(..), Assoc(..))
 
 import GridC.AST
 import GridC.Lexer
@@ -20,9 +21,32 @@ parseGC name input = eitherMap show id $ parse programP name input
 
         statementP = ExpressionStm <$> expressionP <* semi
 
-        expressionP =
-            try functionCallP
-            <|> Identifier <$> identifier
+        expressionP = buildExpressionParser table termP
+
+        termP = parens expressionP
+            <|> Name <$> identifier
             <|> Value . show <$> integer
 
-        functionCallP = FunctionCall <$> identifier <*> parens (commaSep expressionP)
+        table = [
+            [Postfix callP, Postfix arrayP],
+            [binary "*" "mul", binary "/" "div", binary "%" "mod"],
+            [binary "+" "add", binary "-" "sub"],
+            [Infix assignP AssocRight]]
+
+        callP = do
+            args <- parens (commaSep expressionP)
+            return $ flip Call args
+
+        arrayP = do
+            index <- brackets expressionP
+            return $ flip ArrayAccess index
+
+        assignP = do
+            reservedOp "="
+            return Assignment
+
+        binary op fun = Infix (opP op fun) AssocLeft
+
+        opP op fun = do
+            reservedOp op
+            return $ \a b -> Call (Name fun) [a, b]
