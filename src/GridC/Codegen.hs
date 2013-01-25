@@ -5,12 +5,11 @@ module GridC.Codegen (codegen) where
 import Control.Applicative ((<$>))
 import Control.Lens ((.=), (%=), (+=), use)
 import Control.Monad (mplus)
-import Control.Monad.State.Strict (State, evalState)
+import Control.Monad.State (State, execState)
 import Data.Char (toUpper)
 
 import GridC.AST
 import GridC.Optimizer
-import GridC.Util
 
 type Code = String
 
@@ -18,29 +17,42 @@ data Variable = Variable DataType String
     deriving (Show)
 
 data GenState = GenState {
-    _locals :: [Variable],
+    _locals  :: [Variable],
     _globals :: [Variable],
-    _jump :: Int
+    _jump    :: Int,
+    _code    :: [Code],
+    _errors  :: [String]
 }
 
-type Generator = State GenState [Code]
+type Generator = State GenState ()
 
 -- define lenses
 
-locals :: Functor f => ([Variable] -> f [Variable]) -> GenState -> f GenState
-locals f (GenState a b c) = fmap (\a' -> GenState a' b c) (f a)
+type Lens a = Functor f => (a -> f a) -> GenState -> f GenState
 
-globals :: Functor f => ([Variable] -> f [Variable]) -> GenState -> f GenState
-globals f (GenState a b c) = fmap (\b' -> GenState a b' c) (f b)
+locals :: Lens [Variable]
+locals f s = fmap (\val -> s { _locals = val }) $ f $ _locals s
 
-jump :: Functor f => (Int -> f Int) -> GenState -> f GenState
-jump f (GenState a b c) = fmap (GenState a b) (f c)
+globals :: Lens [Variable]
+globals f s = fmap (\val -> s { _globals = val }) $ f $ _globals s
 
---
+jump :: Lens Int
+jump f s = fmap (\val -> s { _jump = val }) $ f $ _jump s
 
-newLocal :: String -> State GenState ()
-newLocal name =
-    locals %= (++ [Variable ValueType name])
+code :: Lens [Code]
+code f s = fmap (\val -> s { _code = val }) $ f $ _code s
+
+errors :: Lens [String]
+errors f s = fmap (\val -> s { _errors = val }) $ f $ _errors s
+
+-- lens helpers
+
+infix 4 ++=
+(++=) :: Lens [a] -> [a] -> Generator
+lens ++= value = lens %= (++ value)
+
+newLocal :: String -> Generator
+newLocal name = locals ++= [Variable ValueType name]
 
 newLabel :: State GenState String
 newLabel = do
@@ -59,32 +71,37 @@ ops1 = words $ a ++ b
         a = "add sub mul div mod abs neg min max "
         b = "greater less equal nequal rand"
 
-codegen :: Program -> String
-codegen program = unlines (optimize compiled)
+codegen :: Program -> Either String String
+codegen program
+    | null errors' = Right $ unlines $ optimize code'
+    | otherwise = Left $ unlines errors'
     where
-        compiled = evalState (genProgram program) emptyState
         emptyState = GenState {
             _locals = [],
             _globals = [],
-            _jump = 0
+            _jump = 0,
+            _code = [],
+            _errors = []
         }
+        state = execState (genProgram program) emptyState
+        errors' = _errors state
+        code' = _code state
 
 genProgram :: Program -> Generator
 genProgram (Program topLevels) = do
-    let
-        begin = ["CALL << @main", "END", ""]
-
-    code <- concatMapM genTopLevel topLevels
-    alloc <- allocGlobals
-    return $ alloc ++ begin ++ code
+    mapM_ genTopLevel topLevels
+    functions <- use code
+    code .= ["CALL << @main", "END", ""]
+    allocGlobals
+    code ++= functions
 
 allocGlobals :: Generator
 allocGlobals = do
     allGlobals <- use globals
     let n = sum $ map variableSize allGlobals
     case n of
-        0 -> return []
-        _ -> return ["PUSH 0", "DUPN << " ++ show n, ""]
+        0 -> return ()
+        _ -> code ++= ["PUSH 0", "DUPN << " ++ show n, ""]
 
 typeSize :: DataType -> Int
 typeSize ValueType = 1
@@ -105,86 +122,69 @@ genTopLevel :: TopLevel -> Generator
 genTopLevel declaration@(Declaration _ name) = do
     mloc <- findGlobal name
     case mloc of
-        Nothing -> do
-            globals %= (++ [variable declaration])
-            return []
-        _ -> error $ "global " ++ name ++ " redeclared"
+        Nothing -> globals %= (++ [variable declaration])
+        _ -> errors ++= ["global " ++ name ++ " redeclared"]
 
 genTopLevel (Function _ name args statements) = do
-    let
-        decl = '@' : name
-        ret = ["# end " ++ decl, ""]
-        statements' = [Return (Value "0") | noReturn]
+    code ++= ['@' : name]
+    locals .= map (Variable ValueType) args
+    genBody $ addReturn statements
+    code ++= ["# end " ++ name, ""]
+
+addReturn :: [Statement] -> [Statement]
+addReturn statements = statements ++ [return0 | noReturn]
+    where
+        return0 = Return (Value "0")
         noReturn
             | null statements = True
             | otherwise = case last statements of
                 Return _ -> False
                 _ -> True
 
-    locals .= map (Variable ValueType) args
-    body <- genBody $ statements ++ statements'
-    return $ decl : body ++ ret
-
 genBody :: [Statement] -> Generator
 genBody statements = do
     oldLocals <- use locals
-    code <- concatMapM genStatement statements
+    mapM_ genStatement statements
     newLocals <- use locals
     locals .= oldLocals
-
-    let
-        diff = drop (length oldLocals) newLocals
-        popLocals = ["POPN << " ++ show (length diff)]
-
-    return $ code ++ popLocals
+    let diff = drop (length oldLocals) newLocals
+    code ++= ["POPN << " ++ show (length diff)]
 
 genStatement :: Statement -> Generator
 genStatement (Return expression) = do
+    code ++= ["# return"]
     allLocals <- use locals
-    code <- genExpression expression
+    genExpression expression
+    code ++= ["STORE retval"]
+    code ++= ["POPN << " ++ show (length allLocals)]
+    code ++= ["PUSH retval", "RETURN"]
     locals %= init
-
-    let
-        comment = ["# return"]
-        saveRet = ["STORE retval"]
-        popLocals = ["POPN << " ++ show (length allLocals)]
-        pushRet = ["PUSH retval"]
-        ret = ["RETURN"]
-
-    return $ comment ++ code ++ saveRet ++ popLocals ++ pushRet ++ ret
 
 genStatement (ExpressionStm expression) = do
-    code <- genExpression expression
+    genExpression expression
+    code ++= ["POP"]
     locals %= init
-    return $ code ++ ["POP"]
 
 genStatement (If condition thenBody elseBody) = do
-    condCode <- genExpression condition
-    locals %= init
-    thenCode <- genStatement thenBody
     elseLabel <- newLabel
-    elseCode <- genStatement elseBody
     endLabel <- newLabel
-
-    let
-        check = ["IFFGOTO << " ++ elseLabel]
-        middle = ["GOTO << " ++ endLabel, elseLabel]
-        end = [endLabel]
-
-    return $ condCode ++ check ++ thenCode ++ middle ++ elseCode ++ end
+    genExpression condition
+    code ++= ["IFFGOTO << " ++ elseLabel]
+    locals %= init
+    genStatement thenBody
+    code ++= ["GOTO << " ++ endLabel, elseLabel]
+    genStatement elseBody
+    code ++= [endLabel]
 
 genStatement (While condition body) = do
     topLabel <- newLabel
-    condCode <- genExpression condition
-    locals %= init
-    bodyCode <- genStatement body
     endLabel <- newLabel
-
-    let
-        check = ["IFFGOTO << " ++ endLabel]
-        end = ["GOTO << " ++ topLabel, "PUSH " ++ topLabel, endLabel]
-
-    return $ topLabel : condCode ++ check ++ bodyCode ++ end
+    code ++= [topLabel]
+    genExpression condition
+    code ++= ["IFFGOTO << " ++ endLabel]
+    locals %= init
+    genStatement body
+    code ++= ["GOTO << " ++ topLabel, endLabel]
 
 genStatement (Block statements) = genBody statements
 
@@ -199,49 +199,56 @@ genCall name arity
 genExpression :: Expression -> Generator
 genExpression (Value value) = do
     newLocal value
-    return ["PUSH " ++ value]
+    code ++= ["PUSH " ++ value]
 
 genExpression (Call (Name name) argExps) = do
-    args <- concatMapM genExpression argExps
-    locals %= (reverse . drop (length argExps) . reverse)
+    code ++= ["# call " ++ name]
+    oldLocals <- use locals
+    mapM_ genExpression argExps
+    code ++= genCall name (length argExps)
+    locals .= oldLocals
     newLocal $ name ++ " retval"
-    return $ ["# call " ++ name] ++ args ++ genCall name (length argExps)
 
-genExpression Call{} = return []
+genExpression Call{} =
+    errors ++= ["can't call an arbitrary expression"]
+
+genExpression (Name name@('@':_)) = do
+    newLocal $ "temp " ++ name
+    code ++= ["PUSH " ++ name]
 
 genExpression (Name name) = do
     pos <- findName name
     newLocal $ "temp " ++ name
-    return ["PEEK << " ++ show pos]
+    code ++= ["PEEK << " ++ show pos]
 
 genExpression (ArrayAccess (Name name) index) = do
     loc <- findName name
-    indexCode <- genExpression index
-    locals %= init
+    genExpression index
     newLocal $ "temp " ++ name ++ "[exp]"
-    return $ indexCode ++ ["ADD << " ++ show loc, "PEEK"]
+    code ++= ["ADD << " ++ show loc, "PEEK"]
+    locals %= init
 
-genExpression ArrayAccess{} = return []
+genExpression ArrayAccess{} =
+    errors ++= ["can't array-access an arbitrary expression"]
 
 genExpression (Assignment (Name name) expression) = do
-    mpos <- findName' name
-    code <- genExpression expression
-    case mpos of
-        Just pos ->
-            return $ code ++ ["DUP", "POKE << " ++ show pos]
-        Nothing -> do
-            newLocal name
-            return $ ("# assign " ++ name) : code
+    pos <- findName name
+    genExpression expression
+    code ++= ["POKE << " ++ show pos]
+    code ++= ["PEEK << " ++ show pos]
+    newLocal $ "temp " ++ name
 
 genExpression (Assignment (ArrayAccess (Name name) index) expression) = do
     loc <- findName name
-    exprCode <- genExpression expression
-    indexCode <- genExpression index
-    locals %= init
-    let assignCode = ["ADD << " ++ show loc, "POKE"]
-    return $ "DUP" : exprCode ++ indexCode ++ assignCode
+    genExpression expression
+    newLocal "tmp array assign"
+    code ++= ["DUP"]
+    genExpression index
+    code ++= ["ADD << " ++ show loc, "POKE"]
+    locals %= init . init
 
-genExpression Assignment{} = return []
+genExpression Assignment{} =
+    errors ++= ["can't array-assign an arbitrary expression"]
 
 findVariable :: Identifier -> [Variable] -> Maybe Int
 findVariable _ [] = Nothing
@@ -271,4 +278,6 @@ findName name = do
     mloc <- findName' name
     case mloc of
         Just loc -> return loc
-        Nothing -> error $ "identifier " ++ name ++ " not in scope"
+        Nothing -> do
+            errors ++= ["identifier " ++ name ++ " not in scope"]
+            return 9999999
