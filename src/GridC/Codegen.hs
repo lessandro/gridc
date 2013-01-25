@@ -153,17 +153,6 @@ genStatement (Return expression) = do
 
     return $ comment ++ code ++ saveRet ++ popLocals ++ pushRet ++ ret
 
-genStatement (Assignment name expression) = do
-    mpos <- findName' name
-    code <- genExpression expression
-    locals %= init
-    case mpos of
-        Just pos ->
-            return $ code ++ ["PUSH " ++ show pos, "POKE"]
-        Nothing -> do
-            newLocal name
-            return $ ("# assign " ++ name) : code
-
 genStatement (ExpressionStm expression) = do
     code <- genExpression expression
     locals %= init
@@ -197,14 +186,6 @@ genStatement (While condition body) = do
 
     return $ topLabel : condCode ++ check ++ bodyCode ++ end
 
-genStatement (ArrayAssignment name index expression) = do
-    loc <- findName name
-    exprCode <- genExpression expression
-    indexCode <- genExpression index
-    locals %= init . init
-    let assignCode = ["ADD << " ++ show loc, "POKE"]
-    return $ exprCode ++ indexCode ++ assignCode
-
 genStatement (Block statements) = genBody statements
 
 genCall :: Identifier -> Int -> [Code]
@@ -220,27 +201,47 @@ genExpression (Value value) = do
     newLocal value
     return ["PUSH " ++ value]
 
-genExpression (FunctionCall name argExps) = do
+genExpression (Call (Name name) argExps) = do
     args <- concatMapM genExpression argExps
     locals %= (reverse . drop (length argExps) . reverse)
     newLocal $ name ++ " retval"
     return $ ["# call " ++ name] ++ args ++ genCall name (length argExps)
 
-genExpression (Identifier name) = do
+genExpression Call{} = return []
+
+genExpression (Name name) = do
     pos <- findName name
     newLocal $ "temp " ++ name
     return ["PEEK << " ++ show pos]
 
-genExpression (Constant name) = do
-    newLocal $ "temp " ++ name
-    return ["PUSH " ++ name]
-
-genExpression (ArrayAccess name index) = do
+genExpression (ArrayAccess (Name name) index) = do
     loc <- findName name
     indexCode <- genExpression index
     locals %= init
     newLocal $ "temp " ++ name ++ "[exp]"
     return $ indexCode ++ ["ADD << " ++ show loc, "PEEK"]
+
+genExpression ArrayAccess{} = return []
+
+genExpression (Assignment (Name name) expression) = do
+    mpos <- findName' name
+    code <- genExpression expression
+    case mpos of
+        Just pos ->
+            return $ code ++ ["DUP", "POKE << " ++ show pos]
+        Nothing -> do
+            newLocal name
+            return $ ("# assign " ++ name) : code
+
+genExpression (Assignment (ArrayAccess (Name name) index) expression) = do
+    loc <- findName name
+    exprCode <- genExpression expression
+    indexCode <- genExpression index
+    locals %= init
+    let assignCode = ["ADD << " ++ show loc, "POKE"]
+    return $ "DUP" : exprCode ++ indexCode ++ assignCode
+
+genExpression Assignment{} = return []
 
 findVariable :: Identifier -> [Variable] -> Maybe Int
 findVariable _ [] = Nothing

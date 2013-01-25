@@ -18,19 +18,17 @@ data TopLevel =
 data Statement =
     ExpressionStm Expression
     | Return Expression
-    | Assignment Identifier Expression
-    | ArrayAssignment Identifier Expression Expression
     | If Expression Statement Statement
     | While Expression Statement
     | Block [Statement]
     deriving (Show)
 
 data Expression =
-    FunctionCall Identifier [Expression]
+    Call Expression [Expression]
+    | Assignment Expression Expression
+    | ArrayAccess Expression Expression
     | Value String
-    | Identifier String
-    | ArrayAccess Identifier Expression
-    | Constant String
+    | Name Identifier
     deriving (Show)
 
 showAST :: Show a => a -> String
