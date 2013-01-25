@@ -3,7 +3,7 @@ module Main (main) where
 import System.Environment
 
 import GridC.AST
-import GridC.Parser2
+import GridC.Parser
 import GridC.Codegen
 
 main :: IO ()
