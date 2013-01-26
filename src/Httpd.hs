@@ -1,8 +1,8 @@
 module Main (main) where
 
-import Data.Char
 import Control.Concurrent
 import qualified Control.Exception as E
+import Data.Char
 import Network
 import System.IO
 
@@ -110,7 +110,11 @@ doPost contents = E.catch (E.evaluate $ compile contents) handler
         handler = return . show
 
 compile :: String -> String
-compile = codegen . parseGC
+compile input = eitherMap id id (eitherMap Left codegen parsed)
+    where
+        parsed = parseGC "<input>" input
+        eitherMap f _ (Left l) = f l
+        eitherMap _ g (Right r) = g r
 
 -- Process the HTTP request
 processRequest :: String -> String -> String -> IO String
