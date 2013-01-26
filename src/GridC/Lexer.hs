@@ -10,7 +10,8 @@ type Parser u a = ParsecT String u Identity a
 lexer :: P.GenTokenParser String u Identity
 lexer = P.makeTokenParser javaStyle {
     P.reservedNames = ["int", "void", "if", "else", "for", "while", "return"],
-    P.identStart = letter <|> oneOf "_@"
+    P.identStart = letter <|> oneOf "_@",
+    P.caseSensitive = True
 }
 
 parens :: Parser u a -> Parser u a
@@ -51,3 +52,6 @@ reservedOp = P.reservedOp lexer
 
 reserved :: String -> Parser u ()
 reserved = P.reserved lexer
+
+whiteSpace :: Parser u ()
+whiteSpace = P.whiteSpace lexer

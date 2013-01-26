@@ -1,7 +1,7 @@
 module GridC.Parser where
 
 import Control.Applicative ((<$>), (<$), (<*>), (<*), (*>))
-import Text.Parsec (parse, option, many, (<|>))
+import Text.Parsec (parse, option, many, (<|>), eof)
 import Text.Parsec.Error (ParseError, errorPos)
 import Text.Parsec.Expr (buildExpressionParser, Operator(..), Assoc(..))
 import Text.Parsec.Pos (sourceLine, sourceColumn)
@@ -15,7 +15,7 @@ parseGC programName input = eitherMap (showError input) id parsed
     where
         parsed = parse programP programName input
 
-        programP = Program <$> many topLevelP
+        programP = Program <$> (whiteSpace *> many topLevelP) <* eof
 
         topLevelP = do
             valueType <- valueTypeP
