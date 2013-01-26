@@ -2,15 +2,19 @@ module GridC.Parser where
 
 import Control.Applicative ((<$>), (<$), (<*>), (<*), (*>))
 import Text.Parsec (parse, option, many, (<|>))
+import Text.Parsec.Error (ParseError, errorPos)
 import Text.Parsec.Expr (buildExpressionParser, Operator(..), Assoc(..))
+import Text.Parsec.Pos (sourceLine, sourceColumn)
 
 import GridC.AST
 import GridC.Lexer
 import GridC.Util
 
 parseGC :: String -> String -> Either String Program
-parseGC programName input = eitherMap show id $ parse programP programName input
+parseGC programName input = eitherMap (showError input) id parsed
     where
+        parsed = parse programP programName input
+
         programP = Program <$> many topLevelP
 
         topLevelP = do
@@ -79,3 +83,13 @@ parseGC programName input = eitherMap show id $ parse programP programName input
         opP op fun = do
             reservedOp op
             return $ \a b -> Call (Name fun) [a, b]
+
+showError :: String -> ParseError -> String
+showError src e = init $ unlines [show e, line0, line1, column]
+    where
+        line0 = if lineNum == 1 then "" else showLine (lineNum - 1)
+        line1 = showLine lineNum
+        lineNum = sourceLine (errorPos e)
+        showLine n = (lines src ++ [""]) !! (n - 1)
+        column = replicate (colNum - 1) ' ' ++ "^"
+        colNum = sourceColumn (errorPos e)
