@@ -1,6 +1,13 @@
-void main(a, b) {
-    b;
-    zxc(1);
-    a;
-    xvcv();
+void main() {
+    for (i=0; i<10; i = i + 1)
+        print(i);
+
+    a = 0;
+    for (;;) {
+        print(a);
+        if (a == 10) {
+            return;
+        }
+        a = a + 1;
+    }
 }

@@ -65,12 +65,8 @@ int nums()
 {
     a = 123;
     b = -456;
-    c = 1.23;
-    d = -4.56;
     print(a);
     print(b);
-    print(c);
-    print(d);
 
     e = 1 + 2 * 3 + 4 * 5;
     f = 1 + (2 * 3) + (4 * 5);
