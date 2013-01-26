@@ -37,9 +37,9 @@ showAST x = '#' : showAST' 0 (show x)
 showAST' :: Int -> String -> String
 showAST' _ [] = []
 showAST' n (x:xs)
-    | x `elem` "{[(" = x : indent (n + 2) ++ showAST' (n + 2) rest
-    | x `elem` "}])" = indent (n - 2) ++ [x] ++ showAST' (n - 2) rest
-    | x == ',' = x : indent n ++ showAST' n rest
+    | x `elem` "{[(" = indent (n + 2) ++ showAST' (n + 2) rest
+    | x `elem` "}])" = showAST' (n - 2) rest
+    | x == ',' = indent n ++ showAST' n rest
     | otherwise = x : showAST' n xs
     where
         indent m = '\n' : '#' : replicate m ' '
