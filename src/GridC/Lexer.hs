@@ -9,7 +9,7 @@ type Parser u a = ParsecT String u Identity a
 
 lexer :: P.GenTokenParser String u Identity
 lexer = P.makeTokenParser javaStyle {
-    P.reservedNames = ["int", "void", "for", "while", "return"],
+    P.reservedNames = ["int", "void", "if", "else", "for", "while", "return"],
     P.identStart = letter <|> oneOf "_@"
 }
 
@@ -40,8 +40,14 @@ comma = P.comma lexer
 semi :: Parser u String
 semi = P.semi lexer
 
+natural :: Parser u Integer
+natural = P.natural lexer
+
 integer :: Parser u Integer
 integer = P.integer lexer
 
 reservedOp :: String -> Parser u ()
 reservedOp = P.reservedOp lexer
+
+reserved :: String -> Parser u ()
+reserved = P.reserved lexer

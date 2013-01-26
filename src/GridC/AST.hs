@@ -4,7 +4,7 @@ import Data.Char
 
 type Identifier = String
 
-data DataType = ValueType | ArrayType Int
+data DataType = ValueType | ArrayType Integer
     deriving (Show)
 
 data Program = Program [TopLevel]

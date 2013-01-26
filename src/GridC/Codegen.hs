@@ -10,6 +10,7 @@ import Data.Char (toUpper)
 
 import GridC.AST
 import GridC.Optimizer
+import GridC.Util
 
 type Code = String
 
@@ -62,14 +63,14 @@ newLabel = do
 
 -- opcodes that return 0 values
 ops0 :: [String]
-ops0 = words "print panic"
+ops0 = words "print panic exit"
 
 -- opcodes that return 1 value
 ops1 :: [String]
-ops1 = words $ a ++ b
+ops1 = words a ++ b
     where
-        a = "add sub mul div mod abs neg min max "
-        b = "greater less equal nequal rand"
+        a = "min max abs neg rand"
+        b = map snd $ concat binOps
 
 codegen :: Program -> Either String String
 codegen program
@@ -91,8 +92,9 @@ genProgram :: Program -> Generator
 genProgram (Program topLevels) = do
     mapM_ genTopLevel topLevels
     functions <- use code
-    code .= ["CALL << @main", "END", ""]
+    code .= []
     allocGlobals
+    code ++= ["CALL << @main", "END", ""]
     code ++= functions
 
 allocGlobals :: Generator
@@ -103,7 +105,7 @@ allocGlobals = do
         0 -> return ()
         _ -> code ++= ["PUSH 0", "DUPN << " ++ show n, ""]
 
-typeSize :: DataType -> Int
+typeSize :: DataType -> Integer
 typeSize ValueType = 1
 typeSize (ArrayType n) = n
 
@@ -115,7 +117,7 @@ variable (Declaration dataType name) =
 variable (Function dataType name _ _) =
     Variable dataType name
 
-variableSize :: Variable -> Int
+variableSize :: Variable -> Integer
 variableSize (Variable dataType _) = typeSize dataType
 
 genTopLevel :: TopLevel -> Generator
@@ -159,6 +161,14 @@ genStatement (Return expression) = do
     code ++= ["POPN << " ++ show (length allLocals)]
     code ++= ["PUSH retval", "RETURN"]
     locals %= init
+
+genStatement (ExpressionStm (Assignment (Name name) expression)) = do
+    mpos <- findName' name
+    genExpression expression
+    locals %= init
+    case mpos of
+        Just pos -> code ++= ["POKE << " ++ show pos]
+        Nothing -> newLocal name
 
 genStatement (ExpressionStm expression) = do
     genExpression expression
@@ -234,8 +244,9 @@ genExpression ArrayAccess{} =
 genExpression (Assignment (Name name) expression) = do
     pos <- findName name
     genExpression expression
+    code ++= ["DUP"]
     code ++= ["POKE << " ++ show pos]
-    code ++= ["PEEK << " ++ show pos]
+    locals %= init
     newLocal $ "temp " ++ name
 
 genExpression (Assignment (ArrayAccess (Name name) index) expression) = do
@@ -250,30 +261,30 @@ genExpression (Assignment (ArrayAccess (Name name) index) expression) = do
 genExpression Assignment{} =
     errors ++= ["can't array-assign an arbitrary expression"]
 
-findVariable :: Identifier -> [Variable] -> Maybe Int
+findVariable :: Identifier -> [Variable] -> Maybe Integer
 findVariable _ [] = Nothing
 findVariable name (x@(Variable _ xname):xs)
     | name == xname = Just 0
     | otherwise = (+ variableSize x) <$> findVariable name xs
 
-findLocal :: Identifier -> State GenState (Maybe Int)
+findLocal :: Identifier -> State GenState (Maybe Integer)
 findLocal name = do
     allLocals <- use locals
     return $ flip (-) (sum $ map variableSize allLocals) <$> findVariable name allLocals
 
-findGlobal :: Identifier -> State GenState (Maybe Int)
+findGlobal :: Identifier -> State GenState (Maybe Integer)
 findGlobal name = do
     allGlobals <- use globals
     return $ findVariable name allGlobals
 
-findName' :: Identifier -> State GenState (Maybe Int)
+findName' :: Identifier -> State GenState (Maybe Integer)
 findName' name = do
     local <- findLocal name
     global <- findGlobal name
     let location = local `mplus` global
     return location
 
-findName :: Identifier -> State GenState Int
+findName :: Identifier -> State GenState Integer
 findName name = do
     mloc <- findName' name
     case mloc of
